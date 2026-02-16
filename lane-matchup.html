@@ -371,6 +371,7 @@
     .picker-filter-btn.agi.active { background: #27ae60; border-color: #27ae60; }
     .picker-filter-btn.int.active { background: #2980b9; border-color: #2980b9; }
     .picker-filter-btn.all.active { background: #8e44ad; border-color: #8e44ad; }
+    .picker-filter-btn.meta.active { background: #f39c12; border-color: #f39c12; }
 
     .picker-grid {
       display: grid;
@@ -683,6 +684,7 @@
           <button class="picker-filter-btn agi" data-attr="agi">AGI</button>
           <button class="picker-filter-btn int" data-attr="int">INT</button>
           <button class="picker-filter-btn all" data-attr="all">UNI</button>
+          <button class="picker-filter-btn meta" id="meta-filter-btn">META</button>
         </div>
         <div class="picker-grid" id="picker-grid"></div>
       </div>
@@ -720,12 +722,15 @@
     <div class="loading" id="loading-msg">Loading heroes...</div>
   </div>
 
+  <script src="resources/meta.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
     let slots = { offlaner: null, pos4: null, carry: null, pos5: null };
     let activeSlot = null;
     let pickerAttrFilter = 'all-heroes';
+    let pickerMetaFilter = false;
+    const metaHeroNames = new Set(META_ALL.flatMap(arr => arr.slice(0, 5)));
     let lastAnalysisData = null;
     let selectedMetric = 'ehp_phys';
 
@@ -842,8 +847,10 @@
       document.getElementById('picker-title').textContent = slotLabels[slotId];
       document.getElementById('picker-search').value = '';
       pickerAttrFilter = 'all-heroes';
+      pickerMetaFilter = false;
       document.querySelectorAll('.picker-filter-btn').forEach(b => b.classList.remove('active'));
       document.querySelector('.picker-filter-btn[data-attr="all-heroes"]').classList.add('active');
+      document.getElementById('meta-filter-btn').classList.remove('active');
       renderPickerGrid();
       document.getElementById('picker-overlay').classList.add('open');
       document.getElementById('picker-search').focus();
@@ -862,7 +869,8 @@
       const filtered = heroes.filter(h => {
         const matchName = h.localized_name.toLowerCase().includes(search);
         const matchAttr = pickerAttrFilter === 'all-heroes' || h.primary_attr === pickerAttrFilter;
-        return matchName && matchAttr;
+        const matchMeta = !pickerMetaFilter || metaHeroNames.has(h.localized_name);
+        return matchName && matchAttr && matchMeta;
       });
 
       grid.innerHTML = filtered.map(h => {
@@ -888,13 +896,18 @@
 
     // Picker filters
     document.getElementById('picker-search').addEventListener('input', renderPickerGrid);
-    document.querySelectorAll('.picker-filter-btn').forEach(btn => {
+    document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.picker-filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         pickerAttrFilter = btn.dataset.attr;
         renderPickerGrid();
       });
+    });
+    document.getElementById('meta-filter-btn').addEventListener('click', () => {
+      pickerMetaFilter = !pickerMetaFilter;
+      document.getElementById('meta-filter-btn').classList.toggle('active', pickerMetaFilter);
+      renderPickerGrid();
     });
 
     document.getElementById('picker-overlay').addEventListener('click', (e) => {
