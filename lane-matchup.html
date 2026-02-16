@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lane Matchup - Dota 2</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      min-height: 100vh;
+      background: #0f1a2e;
+      border-right: 1px solid #0f3460;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 200;
+      transition: transform 0.3s;
+    }
+
+    .sidebar-brand {
+      padding: 20px 16px;
+      border-bottom: 2px solid #e94560;
+      text-align: center;
+    }
+
+    .sidebar-brand h2 {
+      font-size: 1.1rem;
+      color: #e94560;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-brand span {
+      font-size: 0.65rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .sidebar nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar nav a:hover {
+      color: #e0e0e0;
+      background: rgba(233, 69, 96, 0.05);
+    }
+
+    .sidebar nav a.active {
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.1);
+      border-left-color: #e94560;
+    }
+
+    .sidebar nav a .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 220px;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 300;
+      background: #0f1a2e;
+      border: 1px solid #0f3460;
+      color: #e0e0e0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 199;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-toggle { display: block; }
+      .main-content { margin-left: 0; }
+    }
+
+    header {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #e94560;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #e94560;
+      letter-spacing: 2px;
+    }
+
+    /* Hero Selection Area */
+    .matchup-setup {
+      padding: 24px 20px;
+      background: #16213e;
+    }
+
+    .matchup-panels {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+
+    .team-panel {
+      flex: 1;
+      min-width: 260px;
+      max-width: 380px;
+    }
+
+    .team-header {
+      text-align: center;
+      padding: 8px 16px;
+      border-radius: 8px 8px 0 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .team-header.dire { background: #e94560; }
+    .team-header.radiant { background: #27ae60; }
+
+    .team-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: #1a1a2e;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #0f3460;
+      border-top: none;
+    }
+
+    .hero-slot {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #16213e;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 2px dashed #0f3460;
+      min-height: 58px;
+      transition: all 0.2s;
+    }
+
+    .hero-slot:hover { border-color: #e94560; }
+
+    .hero-slot.filled {
+      border-style: solid;
+      border-color: #0f3460;
+    }
+
+    .hero-slot .slot-placeholder {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #666;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    .hero-slot .slot-placeholder .plus {
+      font-size: 1.4rem;
+      color: #444;
+      width: 40px;
+      text-align: center;
+    }
+
+    .hero-slot .slot-hero {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .hero-slot .slot-hero img {
+      width: 56px;
+      height: 32px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .hero-slot .slot-hero .slot-name {
+      flex: 1;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .hero-slot .slot-hero .slot-role {
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    .hero-slot .clear-slot {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+
+    .hero-slot .clear-slot:hover { color: #e94560; }
+
+    .vs-divider {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #e94560;
+      text-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+      flex-shrink: 0;
+    }
+
+    .analyze-btn-wrapper {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .analyze-btn {
+      padding: 12px 40px;
+      border-radius: 8px;
+      border: none;
+      background: #e94560;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.2s;
+    }
+
+    .analyze-btn:hover { background: #d63851; transform: translateY(-1px); }
+    .analyze-btn:disabled { background: #444; cursor: not-allowed; transform: none; }
+
+    /* Hero Picker Modal */
+    .picker-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 500;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .picker-overlay.open { display: flex; }
+
+    .picker-modal {
+      background: #16213e;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #0f3460;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .picker-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #0f3460;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .picker-header h3 {
+      font-size: 1.1rem;
+      color: #e94560;
+    }
+
+    .picker-close {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .picker-close:hover { color: #e94560; }
+
+    .picker-filters {
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .picker-filters input {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      width: 200px;
+      outline: none;
+    }
+
+    .picker-filters input:focus { border-color: #e94560; }
+
+    .picker-filter-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .picker-filter-btn:hover { background: #0f3460; }
+    .picker-filter-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+    .picker-filter-btn.str.active { background: #c23616; border-color: #c23616; }
+    .picker-filter-btn.agi.active { background: #27ae60; border-color: #27ae60; }
+    .picker-filter-btn.int.active { background: #2980b9; border-color: #2980b9; }
+    .picker-filter-btn.all.active { background: #8e44ad; border-color: #8e44ad; }
+
+    .picker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 6px;
+      padding: 12px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .picker-card {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .picker-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
+      border-color: #e94560;
+    }
+
+    .picker-card.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .picker-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+
+    .picker-card .picker-name {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 14px 4px 3px;
+      font-size: 0.6rem;
+      text-align: center;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .picker-card .attr-indicator {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .attr-indicator.str { background: #c23616; }
+    .attr-indicator.agi { background: #27ae60; }
+    .attr-indicator.int { background: #2980b9; }
+    .attr-indicator.all { background: #8e44ad; }
+
+    /* Results Area */
+    .results-area {
+      display: none;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .results-area.visible { display: block; }
+
+    /* Chart Section */
+    .chart-section {
+      margin-bottom: 24px;
+    }
+
+    .metric-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      justify-content: center;
+    }
+
+    .metric-btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .metric-btn:hover { background: #0f3460; }
+    .metric-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+
+    .chart-container {
+      background: #16213e;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+      padding: 16px;
+    }
+
+    .chart-container canvas {
+      width: 100%;
+      height: 360px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #ccc;
+    }
+
+    .legend-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .legend-line.dashed {
+      background: repeating-linear-gradient(
+        90deg,
+        currentColor 0px,
+        currentColor 6px,
+        transparent 6px,
+        transparent 10px
+      );
+      height: 2px;
+    }
+
+    /* Summary Cards */
+    .summary-section {
+      margin-bottom: 24px;
+    }
+
+    .summary-section h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #e94560;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #0f3460;
+      padding-bottom: 6px;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      background: #16213e;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+      padding: 14px;
+    }
+
+    .summary-card .minute-label {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .summary-card .level-label {
+      font-size: 0.7rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .favor {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .favor.dire { color: #e94560; }
+    .summary-card .favor.radiant { color: #27ae60; }
+    .summary-card .favor.even { color: #f39c12; }
+
+    .summary-card .side-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+
+    /* Detailed Table */
+    .table-section {
+      margin-bottom: 24px;
+    }
+
+    .table-section h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #e94560;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #0f3460;
+      padding-bottom: 6px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+    }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      min-width: 900px;
+    }
+
+    .detail-table th, .detail-table td {
+      padding: 6px 8px;
+      text-align: center;
+      border-bottom: 1px solid #0f3460;
+      white-space: nowrap;
+    }
+
+    .detail-table thead th {
+      background: #1a1a2e;
+      color: #999;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+    }
+
+    .detail-table thead th.dire-col { background: rgba(233, 69, 96, 0.15); color: #e94560; }
+    .detail-table thead th.radiant-col { background: rgba(39, 174, 96, 0.15); color: #27ae60; }
+    .detail-table thead th.combined-col { background: rgba(243, 156, 18, 0.15); color: #f39c12; }
+
+    .detail-table tbody tr:hover td { background: rgba(233, 69, 96, 0.05); }
+
+    .detail-table .advantage-cell.dire-fav { color: #e94560; font-weight: 600; }
+    .detail-table .advantage-cell.radiant-fav { color: #27ae60; font-weight: 600; }
+    .detail-table .advantage-cell.even { color: #f39c12; }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #999;
+      font-size: 1.1rem;
+    }
+
+    @media (max-width: 600px) {
+      .matchup-panels { flex-direction: column; }
+      .vs-divider { font-size: 1.4rem; }
+      .team-panel { max-width: 100%; }
+      .summary-cards { grid-template-columns: 1fr 1fr; }
+      .chart-container canvas { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>DOTA 2</h2>
+      <span>Analysis</span>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="nav-icon">&#9813;</span>
+        Hero Stats
+      </a>
+      <a href="compare.html">
+        <span class="nav-icon">&#9878;</span>
+        Hero Comparison
+      </a>
+      <a href="lane-matchup.html" class="active">
+        <span class="nav-icon">&#9876;</span>
+        Lane Matchup
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header>
+      <h1>Lane Matchup Analysis</h1>
+    </header>
+
+    <!-- Hero Selection -->
+    <div class="matchup-setup">
+      <div class="matchup-panels">
+        <div class="team-panel">
+          <div class="team-header dire">Dire Offlane</div>
+          <div class="team-slots">
+            <div class="hero-slot" id="slot-offlaner" onclick="openPicker('offlaner')">
+              <div class="slot-placeholder">
+                <span class="plus">+</span>
+                <span>Offlaner (Pos 3)</span>
+              </div>
+            </div>
+            <div class="hero-slot" id="slot-pos4" onclick="openPicker('pos4')">
+              <div class="slot-placeholder">
+                <span class="plus">+</span>
+                <span>Soft Support (Pos 4)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vs-divider">VS</div>
+
+        <div class="team-panel">
+          <div class="team-header radiant">Radiant Safe Lane</div>
+          <div class="team-slots">
+            <div class="hero-slot" id="slot-carry" onclick="openPicker('carry')">
+              <div class="slot-placeholder">
+                <span class="plus">+</span>
+                <span>Carry (Pos 1)</span>
+              </div>
+            </div>
+            <div class="hero-slot" id="slot-pos5" onclick="openPicker('pos5')">
+              <div class="slot-placeholder">
+                <span class="plus">+</span>
+                <span>Hard Support (Pos 5)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analyze-btn-wrapper">
+        <button class="analyze-btn" id="analyze-btn" disabled>Analyze Matchup</button>
+      </div>
+    </div>
+
+    <!-- Hero Picker Modal -->
+    <div class="picker-overlay" id="picker-overlay">
+      <div class="picker-modal">
+        <div class="picker-header">
+          <h3 id="picker-title">Select Hero</h3>
+          <button class="picker-close" onclick="closePicker()">&times;</button>
+        </div>
+        <div class="picker-filters">
+          <input type="text" id="picker-search" placeholder="Search heroes...">
+          <button class="picker-filter-btn active" data-attr="all-heroes">All</button>
+          <button class="picker-filter-btn str" data-attr="str">STR</button>
+          <button class="picker-filter-btn agi" data-attr="agi">AGI</button>
+          <button class="picker-filter-btn int" data-attr="int">INT</button>
+          <button class="picker-filter-btn all" data-attr="all">UNI</button>
+        </div>
+        <div class="picker-grid" id="picker-grid"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-area" id="results-area">
+      <!-- Chart -->
+      <div class="chart-section">
+        <div class="metric-bar" id="metric-bar">
+          <button class="metric-btn active" data-metric="ehp_phys">EHP (Physical)</button>
+          <button class="metric-btn" data-metric="ehp_magic">EHP (Magical)</button>
+          <button class="metric-btn" data-metric="dps">DPS</button>
+          <button class="metric-btn" data-metric="combined_dps">Combined DPS</button>
+          <button class="metric-btn" data-metric="combined_ehp">Combined EHP</button>
+          <button class="metric-btn" data-metric="advantage">Advantage</button>
+          <button class="metric-btn" data-metric="hp">HP</button>
+          <button class="metric-btn" data-metric="armor">Armor</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-canvas"></canvas>
+        </div>
+        <div class="chart-legend" id="chart-legend"></div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-section">
+        <h2>Key Minute Summary</h2>
+        <div class="summary-cards" id="summary-cards"></div>
+      </div>
+
+      <!-- Detailed Table -->
+      <div class="table-section">
+        <h2>Minute-by-Minute Breakdown</h2>
+        <div class="table-wrapper">
+          <table class="detail-table" id="detail-table"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" id="loading-msg">Loading heroes...</div>
+  </div>
+
+  <script>
+    const CDN = 'https://cdn.cloudflare.steamstatic.com';
+    let heroes = [];
+    let slots = { offlaner: null, pos4: null, carry: null, pos5: null };
+    let activeSlot = null;
+    let pickerAttrFilter = 'all-heroes';
+    let lastAnalysisData = null;
+    let selectedMetric = 'ehp_phys';
+
+    const slotLabels = {
+      offlaner: 'Select Offlaner (Pos 3)',
+      pos4: 'Select Soft Support (Pos 4)',
+      carry: 'Select Carry (Pos 1)',
+      pos5: 'Select Hard Support (Pos 5)',
+    };
+
+    const slotRoleLabels = {
+      offlaner: 'Pos 3',
+      pos4: 'Pos 4',
+      carry: 'Pos 1',
+      pos5: 'Pos 5',
+    };
+
+    // XP model
+    const XP_PER_MINUTE = 360;
+    const LEVEL_XP = [0, 230, 600, 1080, 1660, 2260, 2980, 3820, 4780, 5860, 7060];
+
+    function getLevelAtMinute(minute) {
+      const totalXP = minute * XP_PER_MINUTE;
+      let level = 1;
+      for (let i = 0; i < LEVEL_XP.length; i++) {
+        if (totalXP >= LEVEL_XP[i]) level = i + 1;
+        else break;
+      }
+      return Math.min(level, 11);
+    }
+
+    // Stat calculations
+    function getAttributes(h, level) {
+      const gained = level - 1;
+      return {
+        str: h.base_str + h.str_gain * gained,
+        agi: h.base_agi + h.agi_gain * gained,
+        int: h.base_int + h.int_gain * gained,
+      };
+    }
+
+    function calcHeroStats(h, level) {
+      const { str, agi, int } = getAttributes(h, level);
+      const hp = h.base_health + str * 22;
+      const mana = h.base_mana + int * 12;
+      const armor = h.base_armor + agi * 0.167;
+      const mr = h.base_mr + int * 0.1;
+      const hpRegen = h.base_health_regen + str * 0.1;
+      const manaRegen = h.base_mana_regen + int * 0.05;
+
+      const baseDmg = (h.base_attack_min + h.base_attack_max) / 2;
+      let bonus;
+      if (h.primary_attr === 'str') bonus = str;
+      else if (h.primary_attr === 'agi') bonus = agi;
+      else if (h.primary_attr === 'int') bonus = int;
+      else bonus = (str + agi + int) * 0.7;
+      const damage = baseDmg + bonus;
+
+      const attackSpeed = 1 + agi / 100;
+      const dps = damage * attackSpeed / h.attack_rate;
+      const ehpPhys = hp * (1 + 0.06 * armor);
+      const ehpMagic = hp / (1 - mr / 100);
+
+      return { str, agi, int, hp, mana, armor, mr, hpRegen, manaRegen, damage, dps, ehpPhys, ehpMagic, level };
+    }
+
+    // Load heroes
+    async function loadHeroes() {
+      const res = await fetch('https://api.opendota.com/api/heroStats');
+      heroes = await res.json();
+      heroes.sort((a, b) => a.localized_name.localeCompare(b.localized_name));
+      document.getElementById('loading-msg').style.display = 'none';
+    }
+
+    // Slot rendering
+    function renderSlot(slotId) {
+      const el = document.getElementById('slot-' + slotId);
+      const hero = slots[slotId];
+      if (!hero) {
+        const labels = { offlaner: 'Offlaner (Pos 3)', pos4: 'Soft Support (Pos 4)', carry: 'Carry (Pos 1)', pos5: 'Hard Support (Pos 5)' };
+        el.className = 'hero-slot';
+        el.innerHTML = `<div class="slot-placeholder"><span class="plus">+</span><span>${labels[slotId]}</span></div>`;
+        el.onclick = () => openPicker(slotId);
+      } else {
+        el.className = 'hero-slot filled';
+        el.innerHTML = `
+          <div class="slot-hero">
+            <img src="${CDN}${hero.img}" alt="${hero.localized_name}">
+            <div>
+              <div class="slot-name">${hero.localized_name}</div>
+              <div class="slot-role">${slotRoleLabels[slotId]}</div>
+            </div>
+            <button class="clear-slot" onclick="event.stopPropagation(); clearSlot('${slotId}')">&times;</button>
+          </div>
+        `;
+        el.onclick = () => openPicker(slotId);
+      }
+      updateAnalyzeBtn();
+    }
+
+    function clearSlot(slotId) {
+      slots[slotId] = null;
+      renderSlot(slotId);
+    }
+
+    function updateAnalyzeBtn() {
+      const allFilled = Object.values(slots).every(s => s !== null);
+      document.getElementById('analyze-btn').disabled = !allFilled;
+    }
+
+    // Hero Picker
+    function openPicker(slotId) {
+      activeSlot = slotId;
+      document.getElementById('picker-title').textContent = slotLabels[slotId];
+      document.getElementById('picker-search').value = '';
+      pickerAttrFilter = 'all-heroes';
+      document.querySelectorAll('.picker-filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.picker-filter-btn[data-attr="all-heroes"]').classList.add('active');
+      renderPickerGrid();
+      document.getElementById('picker-overlay').classList.add('open');
+      document.getElementById('picker-search').focus();
+    }
+
+    function closePicker() {
+      document.getElementById('picker-overlay').classList.remove('open');
+      activeSlot = null;
+    }
+
+    function renderPickerGrid() {
+      const search = document.getElementById('picker-search').value.toLowerCase();
+      const usedIds = Object.values(slots).filter(s => s).map(s => s.id);
+      const grid = document.getElementById('picker-grid');
+
+      const filtered = heroes.filter(h => {
+        const matchName = h.localized_name.toLowerCase().includes(search);
+        const matchAttr = pickerAttrFilter === 'all-heroes' || h.primary_attr === pickerAttrFilter;
+        return matchName && matchAttr;
+      });
+
+      grid.innerHTML = filtered.map(h => {
+        const used = usedIds.includes(h.id);
+        return `
+          <div class="picker-card${used ? ' disabled' : ''}" onclick="selectHero(${h.id})">
+            <img src="${CDN}${h.img}" alt="${h.localized_name}" loading="lazy">
+            <span class="attr-indicator ${h.primary_attr}"></span>
+            <div class="picker-name">${h.localized_name}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectHero(heroId) {
+      if (!activeSlot) return;
+      const hero = heroes.find(h => h.id === heroId);
+      if (!hero) return;
+      slots[activeSlot] = hero;
+      renderSlot(activeSlot);
+      closePicker();
+    }
+
+    // Picker filters
+    document.getElementById('picker-search').addEventListener('input', renderPickerGrid);
+    document.querySelectorAll('.picker-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.picker-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pickerAttrFilter = btn.dataset.attr;
+        renderPickerGrid();
+      });
+    });
+
+    document.getElementById('picker-overlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closePicker();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePicker();
+    });
+
+    // Analysis
+    document.getElementById('analyze-btn').addEventListener('click', runAnalysis);
+
+    function runAnalysis() {
+      const data = [];
+      for (let min = 0; min <= 10; min++) {
+        const level = getLevelAtMinute(min);
+        const off = calcHeroStats(slots.offlaner, level);
+        const p4 = calcHeroStats(slots.pos4, level);
+        const car = calcHeroStats(slots.carry, level);
+        const p5 = calcHeroStats(slots.pos5, level);
+
+        const direDPS = off.dps + p4.dps;
+        const radiantDPS = car.dps + p5.dps;
+        const direEHP = off.ehpPhys + p4.ehpPhys;
+        const radiantEHP = car.ehpPhys + p5.ehpPhys;
+        const advantage = (direEHP * direDPS) / (radiantEHP * radiantDPS);
+
+        data.push({ minute: min, level, off, p4, car, p5, direDPS, radiantDPS, direEHP, radiantEHP, advantage });
+      }
+
+      lastAnalysisData = data;
+      document.getElementById('results-area').classList.add('visible');
+      renderChart();
+      renderSummaryCards();
+      renderDetailTable();
+    }
+
+    // Chart
+    const HERO_COLORS = {
+      off: '#e94560',
+      p4: '#e8d44d',
+      car: '#27ae60',
+      p5: '#5ddef4',
+    };
+
+    function getSeriesForMetric(data, metric) {
+      const heroNames = {
+        off: slots.offlaner.localized_name,
+        p4: slots.pos4.localized_name,
+        car: slots.carry.localized_name,
+        p5: slots.pos5.localized_name,
+      };
+
+      switch (metric) {
+        case 'hp':
+          return [
+            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.hp) },
+            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.hp) },
+            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.hp) },
+            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.hp) },
+          ];
+        case 'armor':
+          return [
+            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.armor) },
+            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.armor) },
+            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.armor) },
+            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.armor) },
+          ];
+        case 'dps':
+          return [
+            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.dps) },
+            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.dps) },
+            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.dps) },
+            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.dps) },
+          ];
+        case 'ehp_phys':
+          return [
+            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.ehpPhys) },
+            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.ehpPhys) },
+            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.ehpPhys) },
+            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.ehpPhys) },
+          ];
+        case 'ehp_magic':
+          return [
+            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.ehpMagic) },
+            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.ehpMagic) },
+            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.ehpMagic) },
+            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.ehpMagic) },
+          ];
+        case 'combined_dps':
+          return [
+            { key: 'dire', label: 'Dire DPS', color: HERO_COLORS.off, dashed: false, values: data.map(d => d.direDPS) },
+            { key: 'radiant', label: 'Radiant DPS', color: HERO_COLORS.car, dashed: false, values: data.map(d => d.radiantDPS) },
+          ];
+        case 'combined_ehp':
+          return [
+            { key: 'dire', label: 'Dire EHP', color: HERO_COLORS.off, dashed: false, values: data.map(d => d.direEHP) },
+            { key: 'radiant', label: 'Radiant EHP', color: HERO_COLORS.car, dashed: false, values: data.map(d => d.radiantEHP) },
+          ];
+        case 'advantage':
+          return [
+            { key: 'adv', label: 'Advantage Ratio', color: '#f39c12', dashed: false, values: data.map(d => d.advantage) },
+          ];
+        default:
+          return [];
+      }
+    }
+
+    function renderChart() {
+      const canvas = document.getElementById('chart-canvas');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = rect.width - 32;
+      const h = 360;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+
+      const series = getSeriesForMetric(lastAnalysisData, selectedMetric);
+      if (!series.length) return;
+
+      const pad = { top: 20, right: 20, bottom: 36, left: 60 };
+      const plotW = w - pad.left - pad.right;
+      const plotH = h - pad.top - pad.bottom;
+
+      // Find min/max
+      let allVals = series.flatMap(s => s.values);
+      let minVal = Math.min(...allVals);
+      let maxVal = Math.max(...allVals);
+
+      // For advantage, include 1.0 reference
+      if (selectedMetric === 'advantage') {
+        minVal = Math.min(minVal, 0.8);
+        maxVal = Math.max(maxVal, 1.2);
+      }
+
+      const range = maxVal - minVal || 1;
+      const yMin = minVal - range * 0.08;
+      const yMax = maxVal + range * 0.08;
+
+      function xPos(i) { return pad.left + (i / 10) * plotW; }
+      function yPos(v) { return pad.top + (1 - (v - yMin) / (yMax - yMin)) * plotH; }
+
+      // Grid
+      ctx.strokeStyle = '#0f3460';
+      ctx.lineWidth = 0.5;
+      const gridLines = 5;
+      for (let i = 0; i <= gridLines; i++) {
+        const y = pad.top + (i / gridLines) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(w - pad.right, y);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 10; i++) {
+        const x = xPos(i);
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, pad.top + plotH);
+        ctx.stroke();
+      }
+
+      // Advantage reference line at 1.0
+      if (selectedMetric === 'advantage') {
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        const refY = yPos(1.0);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, refY);
+        ctx.lineTo(w - pad.right, refY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#888';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Even (1.0)', pad.left + 4, refY - 4);
+      }
+
+      // Axis labels
+      ctx.fillStyle = '#888';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 10; i++) {
+        ctx.fillText('Min ' + i, xPos(i), h - 8);
+      }
+
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= gridLines; i++) {
+        const v = yMin + ((gridLines - i) / gridLines) * (yMax - yMin);
+        const y = pad.top + (i / gridLines) * plotH;
+        ctx.fillText(formatChartVal(v), pad.left - 6, y + 3);
+      }
+
+      // Draw series
+      series.forEach(s => {
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2.5;
+        if (s.dashed) ctx.setLineDash([8, 4]);
+        else ctx.setLineDash([]);
+
+        ctx.beginPath();
+        s.values.forEach((v, i) => {
+          const x = xPos(i);
+          const y = yPos(v);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Data points
+        s.values.forEach((v, i) => {
+          ctx.fillStyle = s.color;
+          ctx.beginPath();
+          ctx.arc(xPos(i), yPos(v), 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      });
+
+      // Legend
+      const legendEl = document.getElementById('chart-legend');
+      legendEl.innerHTML = series.map(s => {
+        if (s.dashed) {
+          return `<div class="legend-item">
+            <span class="legend-line" style="height:2px;background:repeating-linear-gradient(90deg,${s.color} 0px,${s.color} 6px,transparent 6px,transparent 10px)"></span>
+            ${s.label}
+          </div>`;
+        }
+        return `<div class="legend-item">
+          <span class="legend-line" style="background:${s.color}"></span>
+          ${s.label}
+        </div>`;
+      }).join('');
+    }
+
+    function formatChartVal(v) {
+      if (Math.abs(v) >= 1000) return (v / 1000).toFixed(1) + 'k';
+      return v.toFixed(1);
+    }
+
+    // Metric buttons
+    document.querySelectorAll('.metric-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedMetric = btn.dataset.metric;
+        if (lastAnalysisData) renderChart();
+      });
+    });
+
+    // Summary Cards
+    function renderSummaryCards() {
+      const keyMinutes = [0, 3, 5, 10];
+      const container = document.getElementById('summary-cards');
+
+      container.innerHTML = keyMinutes.map(min => {
+        const d = lastAnalysisData[min];
+        const advPct = ((d.advantage - 1) * 100).toFixed(1);
+        let favorClass, favorText;
+        if (d.advantage > 1.05) {
+          favorClass = 'dire';
+          favorText = `Dire favored +${advPct}%`;
+        } else if (d.advantage < 0.95) {
+          favorClass = 'radiant';
+          favorText = `Radiant favored +${((-1 * (d.advantage - 1)) * 100).toFixed(1)}%`;
+        } else {
+          favorClass = 'even';
+          favorText = 'Roughly even';
+        }
+
+        return `
+          <div class="summary-card">
+            <div class="minute-label">Minute ${min}</div>
+            <div class="level-label">Level ${d.level}</div>
+            <div class="favor ${favorClass}">${favorText}</div>
+            <div class="side-stats">
+              <span>Dire DPS: ${d.direDPS.toFixed(1)} | EHP: ${Math.round(d.direEHP)}</span>
+              <span>Radiant DPS: ${d.radiantDPS.toFixed(1)} | EHP: ${Math.round(d.radiantEHP)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Detailed Table
+    function renderDetailTable() {
+      const table = document.getElementById('detail-table');
+      const offName = slots.offlaner.localized_name;
+      const p4Name = slots.pos4.localized_name;
+      const carName = slots.carry.localized_name;
+      const p5Name = slots.pos5.localized_name;
+
+      let html = `
+        <thead>
+          <tr>
+            <th rowspan="2">Min</th>
+            <th rowspan="2">Lvl</th>
+            <th colspan="5" class="dire-col">${offName}</th>
+            <th colspan="5" class="dire-col">${p4Name}</th>
+            <th colspan="5" class="radiant-col">${carName}</th>
+            <th colspan="5" class="radiant-col">${p5Name}</th>
+            <th colspan="3" class="combined-col">Combined</th>
+          </tr>
+          <tr>
+            ${['dire-col','dire-col','radiant-col','radiant-col'].map(cls =>
+              `<th class="${cls}">HP</th><th class="${cls}">Arm</th><th class="${cls}">Dmg</th><th class="${cls}">DPS</th><th class="${cls}">EHP</th>`
+            ).join('')}
+            <th class="combined-col">D.DPS</th>
+            <th class="combined-col">R.DPS</th>
+            <th class="combined-col">Adv</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      lastAnalysisData.forEach(d => {
+        const advClass = d.advantage > 1.05 ? 'dire-fav' : d.advantage < 0.95 ? 'radiant-fav' : 'even';
+        html += `<tr>
+          <td>${d.minute}</td>
+          <td>${d.level}</td>
+          ${heroStatCells(d.off)}
+          ${heroStatCells(d.p4)}
+          ${heroStatCells(d.car)}
+          ${heroStatCells(d.p5)}
+          <td>${d.direDPS.toFixed(1)}</td>
+          <td>${d.radiantDPS.toFixed(1)}</td>
+          <td class="advantage-cell ${advClass}">${d.advantage.toFixed(2)}</td>
+        </tr>`;
+      });
+
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    function heroStatCells(s) {
+      return `<td>${Math.round(s.hp)}</td><td>${s.armor.toFixed(1)}</td><td>${Math.round(s.damage)}</td><td>${s.dps.toFixed(1)}</td><td>${Math.round(s.ehpPhys)}</td>`;
+    }
+
+    // Window resize
+    window.addEventListener('resize', () => {
+      if (lastAnalysisData) renderChart();
+    });
+
+    // Sidebar toggle
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    });
+    document.getElementById('sidebar-overlay').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    });
+
+    loadHeroes();
+  </script>
+</body>
+</html>
