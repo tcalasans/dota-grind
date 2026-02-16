@@ -9,7 +9,8 @@
       "WebFetch(domain:api.opendota.com)",
       "WebSearch",
       "WebFetch(domain:hawk.live)",
-      "WebFetch(domain:immortaldraft.com)"
+      "WebFetch(domain:immortaldraft.com)",
+      "Bash(python3:*)"
     ]
   }
 }
