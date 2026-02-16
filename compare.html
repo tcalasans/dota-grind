@@ -307,6 +307,9 @@
         <button class="ctrl-btn" data-dim="dmg">Base Damage</button>
         <button class="ctrl-btn" data-dim="hpregen">HP Regen</button>
         <button class="ctrl-btn" data-dim="manaregen">Mana Regen</button>
+        <button class="ctrl-btn" data-dim="ms">Move Speed</button>
+        <button class="ctrl-btn" data-dim="atkfreq">Attack Freq</button>
+        <button class="ctrl-btn" data-dim="range">Range</button>
       </div>
       <div class="control-row">
         <span class="label">Filter</span>
@@ -377,13 +380,18 @@
           return h.base_health_regen + str * 0.1;
         case 'manaregen':
           return h.base_mana_regen + int * 0.05;
+        case 'ms':
+          return h.move_speed;
+        case 'atkfreq':
+          return (h.base_attack_time + agi) / (h.attack_rate * 100);
+        case 'range':
+          return h.attack_range;
       }
     }
 
     function formatStat(value, dim) {
-      if (dim === 'armor' || dim === 'hpregen' || dim === 'manaregen') return value.toFixed(1);
+      if (dim === 'armor' || dim === 'hpregen' || dim === 'manaregen' || dim === 'atkfreq') return value.toFixed(2);
       if (dim === 'mr') return value.toFixed(1) + '%';
-      if (dim === 'dmg') return Math.round(value);
       return Math.round(value);
     }
 
