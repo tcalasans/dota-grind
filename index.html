@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dota 2 Hero Stats</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #e94560;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #e94560;
+      letter-spacing: 2px;
+    }
+
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: #16213e;
+      flex-wrap: wrap;
+    }
+
+    .filters input {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      width: 260px;
+      outline: none;
+    }
+
+    .filters input:focus { border-color: #e94560; }
+
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover { background: #0f3460; }
+    .filter-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+
+    .filter-btn.str.active { background: #c23616; border-color: #c23616; }
+    .filter-btn.agi.active { background: #27ae60; border-color: #27ae60; }
+    .filter-btn.int.active { background: #2980b9; border-color: #2980b9; }
+    .filter-btn.all.active { background: #8e44ad; border-color: #8e44ad; }
+
+    #hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .hero-card {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .hero-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 20px rgba(233, 69, 96, 0.3);
+      border-color: #e94560;
+    }
+
+    .hero-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+
+    .hero-card .hero-name {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 16px 6px 4px;
+      font-size: 0.7rem;
+      text-align: center;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .attr-indicator {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .attr-indicator.str { background: #c23616; }
+    .attr-indicator.agi { background: #27ae60; }
+    .attr-indicator.int { background: #2980b9; }
+    .attr-indicator.all { background: #8e44ad; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #16213e;
+      border-radius: 12px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid #0f3460;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 24px;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .modal-header img {
+      width: 180px;
+      border-radius: 8px;
+    }
+
+    .modal-header-info h2 {
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+
+    .modal-header-info .attr-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .attr-badge.str { background: #c23616; }
+    .attr-badge.agi { background: #27ae60; }
+    .attr-badge.int { background: #2980b9; }
+    .attr-badge.all { background: #8e44ad; }
+
+    .roles {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .role-tag {
+      background: #1a1a2e;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      color: #aaa;
+    }
+
+    .modal-body { padding: 24px; }
+
+    .stats-section {
+      margin-bottom: 20px;
+    }
+
+    .stats-section h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #e94560;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #0f3460;
+      padding-bottom: 6px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #1a1a2e;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .stat-item .label { color: #999; }
+    .stat-item .value { font-weight: 600; color: #fff; }
+    .stat-item .value.str-color { color: #e74c3c; }
+    .stat-item .value.agi-color { color: #2ecc71; }
+    .stat-item .value.int-color { color: #3498db; }
+
+    .level-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+
+    .level-table th, .level-table td {
+      padding: 6px 10px;
+      text-align: center;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .level-table th {
+      background: #1a1a2e;
+      color: #999;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+    }
+
+    .level-table tr:hover td { background: rgba(233, 69, 96, 0.05); }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 1.8rem;
+      cursor: pointer;
+      z-index: 101;
+      line-height: 1;
+    }
+
+    .close-btn:hover { color: #e94560; }
+
+    .modal-wrapper { position: relative; }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #999;
+      font-size: 1.1rem;
+    }
+
+    .attack-type {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .modal-header { flex-direction: column; text-align: center; }
+      .modal-header img { width: 140px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      #hero-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dota 2 Hero Stats</h1>
+  </header>
+
+  <div class="filters">
+    <input type="text" id="search" placeholder="Search heroes...">
+    <button class="filter-btn active" data-filter="all-heroes">All</button>
+    <button class="filter-btn str" data-filter="str">Strength</button>
+    <button class="filter-btn agi" data-filter="agi">Agility</button>
+    <button class="filter-btn int" data-filter="int">Intelligence</button>
+    <button class="filter-btn all" data-filter="all">Universal</button>
+  </div>
+
+  <div id="hero-grid">
+    <div class="loading">Loading heroes...</div>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-wrapper">
+      <button class="close-btn" id="close-modal">&times;</button>
+      <div class="modal" id="modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+    const CDN = 'https://cdn.cloudflare.steamstatic.com';
+    let heroes = [];
+
+    async function loadHeroes() {
+      const res = await fetch('https://api.opendota.com/api/heroStats');
+      heroes = await res.json();
+      heroes.sort((a, b) => a.localized_name.localeCompare(b.localized_name));
+      renderGrid(heroes);
+    }
+
+    function attrLabel(attr) {
+      return { str: 'Strength', agi: 'Agility', int: 'Intelligence', all: 'Universal' }[attr] || attr;
+    }
+
+    function renderGrid(list) {
+      const grid = document.getElementById('hero-grid');
+      if (!list.length) {
+        grid.innerHTML = '<div class="loading">No heroes found.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(h => `
+        <div class="hero-card" data-id="${h.id}" onclick="showHero(${h.id})">
+          <img src="${CDN}${h.img}" alt="${h.localized_name}" loading="lazy">
+          <span class="attr-indicator ${h.primary_attr}"></span>
+          <div class="hero-name">${h.localized_name}</div>
+        </div>
+      `).join('');
+    }
+
+    function calcHP(baseHP, str) { return baseHP + str * 22; }
+    function calcMana(baseMana, int) { return baseMana + int * 12; }
+    function calcArmor(baseArmor, agi) { return (baseArmor + agi * 0.167).toFixed(1); }
+    function calcHPRegen(baseRegen, str) { return (baseRegen + str * 0.1).toFixed(1); }
+    function calcManaRegen(baseRegen, int) { return (baseRegen + int * 0.05).toFixed(1); }
+    function calcMR(baseMR, int) { return (baseMR + int * 0.1).toFixed(1); }
+
+    function showHero(id) {
+      const h = heroes.find(x => x.id === id);
+      if (!h) return;
+
+      const hp1 = calcHP(h.base_health, h.base_str);
+      const mana1 = calcMana(h.base_mana, h.base_int);
+      const armor1 = calcArmor(h.base_armor, h.base_agi);
+
+      // Build level progression table for levels 1, 5, 10, 15, 20, 25, 30
+      const levels = [1, 5, 10, 15, 20, 25, 30];
+      const rows = levels.map(lvl => {
+        const gained = lvl - 1;
+        const str = h.base_str + h.str_gain * gained;
+        const agi = h.base_agi + h.agi_gain * gained;
+        const int = h.base_int + h.int_gain * gained;
+        const hp = calcHP(h.base_health, str);
+        const mp = calcMana(h.base_mana, int);
+        const arm = calcArmor(h.base_armor, agi);
+        return `<tr>
+          <td>${lvl}</td>
+          <td>${Math.round(str)}</td>
+          <td>${Math.round(agi)}</td>
+          <td>${Math.round(int)}</td>
+          <td>${Math.round(hp)}</td>
+          <td>${Math.round(mp)}</td>
+          <td>${arm}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('modal-content').innerHTML = `
+        <div class="modal-header">
+          <img src="${CDN}${h.img}" alt="${h.localized_name}">
+          <div class="modal-header-info">
+            <h2>${h.localized_name}</h2>
+            <span class="attr-badge ${h.primary_attr}">${attrLabel(h.primary_attr)}</span>
+            <div class="attack-type">${h.attack_type} | Range: ${h.attack_range}</div>
+            <div class="roles">${h.roles.map(r => `<span class="role-tag">${r}</span>`).join('')}</div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="stats-section">
+            <h3>Base Stats (Level 1)</h3>
+            <div class="stats-grid">
+              <div class="stat-item"><span class="label">HP</span><span class="value">${Math.round(hp1)}</span></div>
+              <div class="stat-item"><span class="label">HP Regen</span><span class="value">${calcHPRegen(h.base_health_regen, h.base_str)}</span></div>
+              <div class="stat-item"><span class="label">Mana</span><span class="value">${Math.round(mana1)}</span></div>
+              <div class="stat-item"><span class="label">Mana Regen</span><span class="value">${calcManaRegen(h.base_mana_regen, h.base_int)}</span></div>
+              <div class="stat-item"><span class="label">Armor</span><span class="value">${armor1}</span></div>
+              <div class="stat-item"><span class="label">Magic Resist</span><span class="value">${calcMR(h.base_mr, h.base_int)}%</span></div>
+              <div class="stat-item"><span class="label">Damage</span><span class="value">${h.base_attack_min} - ${h.base_attack_max}</span></div>
+              <div class="stat-item"><span class="label">Attack Rate</span><span class="value">${h.attack_rate}</span></div>
+              <div class="stat-item"><span class="label">Move Speed</span><span class="value">${h.move_speed}</span></div>
+              <div class="stat-item"><span class="label">Day Vision</span><span class="value">${h.day_vision}</span></div>
+              <div class="stat-item"><span class="label">Night Vision</span><span class="value">${h.night_vision}</span></div>
+            </div>
+          </div>
+
+          <div class="stats-section">
+            <h3>Attributes</h3>
+            <div class="stats-grid">
+              <div class="stat-item"><span class="label">Strength</span><span class="value str-color">${h.base_str} + ${h.str_gain}/lvl</span></div>
+              <div class="stat-item"><span class="label">Agility</span><span class="value agi-color">${h.base_agi} + ${h.agi_gain}/lvl</span></div>
+              <div class="stat-item"><span class="label">Intelligence</span><span class="value int-color">${h.base_int} + ${h.int_gain}/lvl</span></div>
+            </div>
+          </div>
+
+          <div class="stats-section">
+            <h3>Stats by Level</h3>
+            <table class="level-table">
+              <thead>
+                <tr>
+                  <th>Level</th>
+                  <th style="color:#e74c3c">STR</th>
+                  <th style="color:#2ecc71">AGI</th>
+                  <th style="color:#3498db">INT</th>
+                  <th>HP</th>
+                  <th>Mana</th>
+                  <th>Armor</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    // Close modal
+    document.getElementById('close-modal').addEventListener('click', () => {
+      document.getElementById('modal-overlay').classList.remove('open');
+    });
+    document.getElementById('modal-overlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('modal-overlay').classList.remove('open');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+    });
+
+    // Filters
+    document.getElementById('search').addEventListener('input', applyFilters);
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+      });
+    });
+
+    function applyFilters() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const attr = document.querySelector('.filter-btn.active').dataset.filter;
+      const filtered = heroes.filter(h => {
+        const matchName = h.localized_name.toLowerCase().includes(query);
+        const matchAttr = attr === 'all-heroes' || h.primary_attr === attr;
+        return matchName && matchAttr;
+      });
+      renderGrid(filtered);
+    }
+
+    loadHeroes();
+  </script>
+</body>
+</html>
