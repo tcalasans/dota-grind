@@ -13,8 +13,8 @@ Open any `.html` file directly in a browser. No server, build, or install step r
 ## Architecture
 
 - **No external libraries** — pure vanilla HTML/CSS/JS, no frameworks, no chart libraries
-- **Single-file pages** — each page contains all its own styles (`<style>`) and logic (`<script>`), nothing is shared across files
-- **Data source** — all hero data is fetched at runtime from the OpenDota API (`https://api.opendota.com/api/heroStats`); hero images use the Steam CDN (`https://cdn.cloudflare.steamstatic.com`)
+- **Single-file pages** — each page contains all its own styles (`<style>`) and logic (`<script>`); shared data lives in `resources/`
+- **Data source** — hero data is pre-fetched and stored in `resources/heroes.js` (run `/fetch-heroes` to refresh from the OpenDota API); meta picks per role are in `resources/meta.js`; hero images use the Steam CDN (`https://cdn.cloudflare.steamstatic.com`)
 - **Dark theme** — consistent palette: background `#1a1a2e`, sidebar `#0f1a2e`, accent `#e94560`, borders `#0f3460`
 
 ## Pages

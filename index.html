@@ -455,14 +455,13 @@
     </div>
   </div>
 
+  <script src="resources/heroes.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
 
-    async function loadHeroes() {
-      const res = await fetch('https://api.opendota.com/api/heroStats');
-      heroes = await res.json();
-      heroes.sort((a, b) => a.localized_name.localeCompare(b.localized_name));
+    function loadHeroes() {
+      heroes = [...HEROES].sort((a, b) => a.localized_name.localeCompare(b.localized_name));
       renderGrid(heroes);
     }
 
