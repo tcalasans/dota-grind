@@ -172,6 +172,7 @@
 
     .ctrl-btn:hover { background: #0f3460; }
     .ctrl-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+    .ctrl-btn.meta.active { background: #f39c12; border-color: #f39c12; }
 
     /* Tier columns */
     .tier-container {
@@ -308,6 +309,10 @@
         <button class="ctrl-btn" data-dim="manaregen">Mana Regen</button>
       </div>
       <div class="control-row">
+        <span class="label">Filter</span>
+        <button class="ctrl-btn meta" id="meta-filter-btn">META</button>
+      </div>
+      <div class="control-row">
         <span class="label">Level</span>
         <button class="ctrl-btn level-btn active" data-level="1">1</button>
         <button class="ctrl-btn level-btn" data-level="5">5</button>
@@ -324,11 +329,14 @@
     </div>
   </div>
 
+  <script src="resources/meta.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
     let selectedDim = 'hp';
     let selectedLevel = 1;
+    let metaFilter = false;
+    const metaHeroNames = new Set(META_ALL.flatMap(arr => arr.slice(0, 5)));
 
     async function loadHeroes() {
       const res = await fetch('https://api.opendota.com/api/heroStats');
@@ -381,7 +389,8 @@
     }
 
     function render() {
-      const entries = heroes.map(h => ({
+      const pool = metaFilter ? heroes.filter(h => metaHeroNames.has(h.localized_name)) : heroes;
+      const entries = pool.map(h => ({
         hero: h,
         value: calcStat(h, selectedDim, selectedLevel),
       }));
@@ -449,6 +458,13 @@
         selectedLevel = parseInt(btn.dataset.level);
         render();
       });
+    });
+
+    // Meta filter
+    document.getElementById('meta-filter-btn').addEventListener('click', () => {
+      metaFilter = !metaFilter;
+      document.getElementById('meta-filter-btn').classList.toggle('active', metaFilter);
+      render();
     });
 
     // Sidebar toggle
