@@ -456,6 +456,7 @@
   </div>
 
   <script src="resources/heroes.js"></script>
+  <script src="resources/hero-stats.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
@@ -484,39 +485,24 @@
       `).join('');
     }
 
-    function calcHP(baseHP, str) { return baseHP + str * 22; }
-    function calcMana(baseMana, int) { return baseMana + int * 12; }
-    function calcArmor(baseArmor, agi) { return (baseArmor + agi * 0.167).toFixed(1); }
-    function calcHPRegen(baseRegen, str) { return (baseRegen + str * 0.1).toFixed(1); }
-    function calcManaRegen(baseRegen, int) { return (baseRegen + int * 0.05).toFixed(1); }
-    function calcMR(baseMR, int) { return (baseMR + int * 0.1).toFixed(1); }
-
     function showHero(id) {
       const h = heroes.find(x => x.id === id);
       if (!h) return;
 
-      const hp1 = calcHP(h.base_health, h.base_str);
-      const mana1 = calcMana(h.base_mana, h.base_int);
-      const armor1 = calcArmor(h.base_armor, h.base_agi);
+      const s1 = calcHeroStats(h, 1);
 
       // Build level progression table for levels 1, 5, 10, 15, 20, 25, 30
       const levels = [1, 5, 10, 15, 20, 25, 30];
       const rows = levels.map(lvl => {
-        const gained = lvl - 1;
-        const str = h.base_str + h.str_gain * gained;
-        const agi = h.base_agi + h.agi_gain * gained;
-        const int = h.base_int + h.int_gain * gained;
-        const hp = calcHP(h.base_health, str);
-        const mp = calcMana(h.base_mana, int);
-        const arm = calcArmor(h.base_armor, agi);
+        const s = calcHeroStats(h, lvl);
         return `<tr>
           <td>${lvl}</td>
-          <td>${Math.round(str)}</td>
-          <td>${Math.round(agi)}</td>
-          <td>${Math.round(int)}</td>
-          <td>${Math.round(hp)}</td>
-          <td>${Math.round(mp)}</td>
-          <td>${arm}</td>
+          <td>${Math.round(s.str)}</td>
+          <td>${Math.round(s.agi)}</td>
+          <td>${Math.round(s.int)}</td>
+          <td>${Math.round(s.hp)}</td>
+          <td>${Math.round(s.mana)}</td>
+          <td>${s.armor.toFixed(1)}</td>
         </tr>`;
       }).join('');
 
@@ -534,12 +520,12 @@
           <div class="stats-section">
             <h3>Base Stats (Level 1)</h3>
             <div class="stats-grid">
-              <div class="stat-item"><span class="label">HP</span><span class="value">${Math.round(hp1)}</span></div>
-              <div class="stat-item"><span class="label">HP Regen</span><span class="value">${calcHPRegen(h.base_health_regen, h.base_str)}</span></div>
-              <div class="stat-item"><span class="label">Mana</span><span class="value">${Math.round(mana1)}</span></div>
-              <div class="stat-item"><span class="label">Mana Regen</span><span class="value">${calcManaRegen(h.base_mana_regen, h.base_int)}</span></div>
-              <div class="stat-item"><span class="label">Armor</span><span class="value">${armor1}</span></div>
-              <div class="stat-item"><span class="label">Magic Resist</span><span class="value">${calcMR(h.base_mr, h.base_int)}%</span></div>
+              <div class="stat-item"><span class="label">HP</span><span class="value">${Math.round(s1.hp)}</span></div>
+              <div class="stat-item"><span class="label">HP Regen</span><span class="value">${s1.hpRegen.toFixed(1)}</span></div>
+              <div class="stat-item"><span class="label">Mana</span><span class="value">${Math.round(s1.mana)}</span></div>
+              <div class="stat-item"><span class="label">Mana Regen</span><span class="value">${s1.manaRegen.toFixed(1)}</span></div>
+              <div class="stat-item"><span class="label">Armor</span><span class="value">${s1.armor.toFixed(1)}</span></div>
+              <div class="stat-item"><span class="label">Magic Resist</span><span class="value">${s1.mr.toFixed(1)}%</span></div>
               <div class="stat-item"><span class="label">Damage</span><span class="value">${h.base_attack_min} - ${h.base_attack_max}</span></div>
               <div class="stat-item"><span class="label">Attack Rate</span><span class="value">${h.attack_rate}</span></div>
               <div class="stat-item"><span class="label">Move Speed</span><span class="value">${h.move_speed}</span></div>

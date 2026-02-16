@@ -334,65 +334,18 @@
 
   <script src="resources/heroes.js"></script>
   <script src="resources/meta.js"></script>
+  <script src="resources/hero-stats.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
     let selectedDim = 'hp';
     let selectedLevel = 1;
     let metaFilter = false;
-    const metaHeroNames = new Set(META_ALL.flatMap(arr => arr.slice(0, 5)));
+    const metaHeroNames = new Set(META_ALL.flatMap(arr => arr.slice(0, 6)));
 
     function loadHeroes() {
       heroes = [...HEROES].sort((a, b) => a.localized_name.localeCompare(b.localized_name));
       render();
-    }
-
-    function getAttributes(h, level) {
-      const gained = level - 1;
-      return {
-        str: h.base_str + h.str_gain * gained,
-        agi: h.base_agi + h.agi_gain * gained,
-        int: h.base_int + h.int_gain * gained,
-      };
-    }
-
-    function calcStat(h, dim, level) {
-      const { str, agi, int } = getAttributes(h, level);
-      switch (dim) {
-        case 'hp':
-          return h.base_health + str * 22;
-        case 'mana':
-          return h.base_mana + int * 12;
-        case 'armor':
-          return h.base_armor + agi * 0.167;
-        case 'mr':
-          return h.base_mr + int * 0.1;
-        case 'dmg': {
-          const baseDmg = (h.base_attack_min + h.base_attack_max) / 2;
-          let bonus;
-          if (h.primary_attr === 'str') bonus = str;
-          else if (h.primary_attr === 'agi') bonus = agi;
-          else if (h.primary_attr === 'int') bonus = int;
-          else bonus = (str + agi + int) * 0.7; // universal
-          return baseDmg + bonus;
-        }
-        case 'hpregen':
-          return h.base_health_regen + str * 0.1;
-        case 'manaregen':
-          return h.base_mana_regen + int * 0.05;
-        case 'ms':
-          return h.move_speed;
-        case 'atkfreq':
-          return (h.base_attack_time + agi) / (h.attack_rate * 100);
-        case 'range':
-          return h.attack_range;
-      }
-    }
-
-    function formatStat(value, dim) {
-      if (dim === 'armor' || dim === 'hpregen' || dim === 'manaregen' || dim === 'atkfreq') return value.toFixed(2);
-      if (dim === 'mr') return value.toFixed(1) + '%';
-      return Math.round(value);
     }
 
     function render() {

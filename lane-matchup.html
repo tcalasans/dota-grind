@@ -471,6 +471,172 @@
       margin-left: 8px;
     }
 
+    /* Matchup Table — 3-column grid */
+    .matchup-table {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .matchup-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 1fr;
+      min-height: 0;
+    }
+
+    .matchup-row + .matchup-row {
+      border-top: 1px solid #0f3460;
+    }
+
+    .matchup-row-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f1a2e;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      padding: 8px 4px;
+      text-align: center;
+    }
+
+    .matchup-row-left,
+    .matchup-row-right {
+      padding: 12px;
+      background: #1a1a2e;
+    }
+
+    .matchup-row-left {
+      border-right: 1px solid #0f3460;
+    }
+
+    .matchup-row-right {
+      border-left: 1px solid #0f3460;
+    }
+
+    /* Header row */
+    .matchup-header {
+      background: #16213e !important;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+    }
+
+    .matchup-header img {
+      width: 56px;
+      height: 32px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .matchup-header .hero-info {
+      flex: 1;
+    }
+
+    .matchup-header .hero-info .name {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .matchup-header .hero-info .attr {
+      font-size: 0.7rem;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .matchup-header-label {
+      background: #0f1a2e;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #e94560;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Spell cards */
+    .spells-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .spell-card {
+      display: flex;
+      gap: 10px;
+      padding: 8px;
+      background: #16213e;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+    }
+
+    .spell-card img {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .spell-card .spell-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .spell-card .spell-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #e0e0e0;
+      margin-bottom: 2px;
+    }
+
+    .spell-card .spell-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 0.7rem;
+      color: #888;
+      flex-wrap: wrap;
+    }
+
+    .spell-card .spell-meta .cd {
+      color: #3498db;
+    }
+
+    .spell-card .spell-meta .mc {
+      color: #2980b9;
+    }
+
+    .spell-card .spell-meta .dmg {
+      color: #e94560;
+    }
+
+    .spell-card .spell-meta .dmg-type-magical {
+      color: #3498db;
+    }
+
+    .spell-card .spell-meta .dmg-type-physical {
+      color: #e94560;
+    }
+
+    .spell-card .spell-meta .dmg-type-pure {
+      color: #f39c12;
+    }
+
+    .spell-card .spell-desc {
+      font-size: 0.7rem;
+      color: #777;
+      margin-top: 4px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
     .loading {
       text-align: center;
       padding: 60px;
@@ -604,6 +770,9 @@
 
   <script src="resources/heroes.js"></script>
   <script src="resources/meta.js"></script>
+  <script src="resources/hero-stats.js"></script>
+  <script src="resources/hero-abilities.js"></script>
+  <script src="resources/abilities.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
@@ -631,55 +800,6 @@
       carry: 'Pos 1',
       pos5: 'Pos 5',
     };
-
-    // XP model
-    const XP_PER_MINUTE = 360;
-    const LEVEL_XP = [0, 230, 600, 1080, 1660, 2260, 2980, 3820, 4780, 5860, 7060];
-
-    function getLevelAtMinute(minute) {
-      const totalXP = minute * XP_PER_MINUTE;
-      let level = 1;
-      for (let i = 0; i < LEVEL_XP.length; i++) {
-        if (totalXP >= LEVEL_XP[i]) level = i + 1;
-        else break;
-      }
-      return Math.min(level, 11);
-    }
-
-    // Stat calculations
-    function getAttributes(h, level) {
-      const gained = level - 1;
-      return {
-        str: h.base_str + h.str_gain * gained,
-        agi: h.base_agi + h.agi_gain * gained,
-        int: h.base_int + h.int_gain * gained,
-      };
-    }
-
-    function calcHeroStats(h, level) {
-      const { str, agi, int } = getAttributes(h, level);
-      const hp = h.base_health + str * 22;
-      const mana = h.base_mana + int * 12;
-      const armor = h.base_armor + agi * 0.167;
-      const mr = h.base_mr + int * 0.1;
-      const hpRegen = h.base_health_regen + str * 0.1;
-      const manaRegen = h.base_mana_regen + int * 0.05;
-
-      const baseDmg = (h.base_attack_min + h.base_attack_max) / 2;
-      let bonus;
-      if (h.primary_attr === 'str') bonus = str;
-      else if (h.primary_attr === 'agi') bonus = agi;
-      else if (h.primary_attr === 'int') bonus = int;
-      else bonus = (str + agi + int) * 0.7;
-      const damage = baseDmg + bonus;
-
-      const attackSpeed = 1 + agi / 100;
-      const dps = damage * attackSpeed / h.attack_rate;
-      const ehpPhys = hp * (1 + 0.06 * armor);
-      const ehpMagic = hp / (1 - mr / 100);
-
-      return { str, agi, int, hp, mana, armor, mr, hpRegen, manaRegen, damage, dps, ehpPhys, ehpMagic, level };
-    }
 
     // URL sync
     function syncURL() {
@@ -772,7 +892,7 @@
       const usedIds = Object.values(slots).filter(s => s).map(s => s.id);
       const grid = document.getElementById('picker-grid');
 
-      const metaList = pickerMetaFilter ? (SLOT_META[activeSlot] || []).slice(0, 5) : null;
+      const metaList = pickerMetaFilter ? (SLOT_META[activeSlot] || []).slice(0, 6) : null;
 
       let filtered = heroes.filter(h => {
         const matchName = h.localized_name.toLowerCase().includes(search);
@@ -831,11 +951,101 @@
       if (e.key === 'Escape') closePicker();
     });
 
+    // Spell helpers
+    function getHeroSpells(hero) {
+      const abilityIds = HERO_ABILITIES[hero.name] || [];
+      return abilityIds
+        .map(id => ABILITIES[id])
+        .filter(ab => ab && ab.dname);
+    }
+
+    function formatCdMc(values) {
+      if (!values) return null;
+      if (Array.isArray(values)) return values.join('/');
+      return String(values);
+    }
+
+    function renderSpellCard(spell) {
+      const cd = formatCdMc(spell.cd);
+      const mc = formatCdMc(spell.mc);
+      const dmg = formatCdMc(spell.dmg);
+      const imgSrc = spell.img ? CDN + spell.img : '';
+      const imgTag = imgSrc ? `<img src="${imgSrc}" alt="${spell.dname}" loading="lazy">` : '';
+      const dmgType = spell.dmg_type || '';
+      const dmgTypeCls = dmgType ? 'dmg-type-' + dmgType.toLowerCase() : '';
+
+      return `
+        <div class="spell-card">
+          ${imgTag}
+          <div class="spell-info">
+            <div class="spell-name">${spell.dname}</div>
+            <div class="spell-meta">
+              ${dmg ? `<span class="dmg">Dmg: ${dmg}</span>` : ''}
+              ${dmgType ? `<span class="${dmgTypeCls}">${dmgType}</span>` : ''}
+              ${cd ? `<span class="cd">CD: ${cd}</span>` : ''}
+              ${mc ? `<span class="mc">Mana: ${mc}</span>` : ''}
+            </div>
+            ${spell.desc ? `<div class="spell-desc">${spell.desc}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMatchupHeader(hero, side) {
+      const attrLabels = { str: 'Strength', agi: 'Agility', int: 'Intelligence', all: 'Universal' };
+      return `
+        <div class="matchup-header matchup-row-${side}">
+          <img src="${CDN}${hero.img}" alt="${hero.localized_name}">
+          <div class="hero-info">
+            <div class="name">${hero.localized_name}</div>
+            <div class="attr">${attrLabels[hero.primary_attr] || hero.primary_attr}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSpellsRow(leftHero, rightHero) {
+      const leftSpells = getHeroSpells(leftHero);
+      const rightSpells = getHeroSpells(rightHero);
+
+      return `
+        <div class="matchup-row-left">
+          <div class="spells-grid">
+            ${leftSpells.map(renderSpellCard).join('')}
+          </div>
+        </div>
+        <div class="matchup-row-label">Spells</div>
+        <div class="matchup-row-right">
+          <div class="spells-grid">
+            ${rightSpells.map(renderSpellCard).join('')}
+          </div>
+        </div>
+      `;
+    }
+
     // Analysis
     document.getElementById('analyze-btn').addEventListener('click', runAnalysis);
 
     function runAnalysis() {
       document.getElementById('results-area').classList.add('visible');
+
+      const offlaner = slots.offlaner;
+      const carry = slots.carry;
+
+      if (offlaner && carry) {
+        document.getElementById('core-matchup').innerHTML = `
+          <div class="matchup-table">
+            <div class="matchup-row">
+              ${renderMatchupHeader(offlaner, 'left')}
+              <div class="matchup-row-label matchup-header-label">VS</div>
+              ${renderMatchupHeader(carry, 'right')}
+            </div>
+            <div class="matchup-row">
+              ${renderSpellsRow(offlaner, carry)}
+            </div>
+          </div>
+        `;
+      }
     }
 
     // Sidebar toggle

@@ -10,7 +10,8 @@
       "WebSearch",
       "WebFetch(domain:hawk.live)",
       "WebFetch(domain:immortaldraft.com)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }
