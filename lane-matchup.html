@@ -519,65 +519,7 @@
       height: 2px;
     }
 
-    /* Summary Cards */
-    .summary-section {
-      margin-bottom: 24px;
-    }
 
-    .summary-section h2 {
-      font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #e94560;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #0f3460;
-      padding-bottom: 6px;
-    }
-
-    .summary-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-    }
-
-    .summary-card {
-      background: #16213e;
-      border-radius: 8px;
-      border: 1px solid #0f3460;
-      padding: 14px;
-    }
-
-    .summary-card .minute-label {
-      font-size: 0.75rem;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    .summary-card .level-label {
-      font-size: 0.7rem;
-      color: #666;
-      margin-bottom: 6px;
-    }
-
-    .summary-card .favor {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .summary-card .favor.dire { color: #e94560; }
-    .summary-card .favor.radiant { color: #27ae60; }
-    .summary-card .favor.even { color: #f39c12; }
-
-    .summary-card .side-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      font-size: 0.75rem;
-      color: #aaa;
-    }
 
     /* Detailed Table */
     .table-section {
@@ -764,12 +706,6 @@
           <canvas id="chart-canvas"></canvas>
         </div>
         <div class="chart-legend" id="chart-legend"></div>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="summary-section">
-        <h2>Key Minute Summary</h2>
-        <div class="summary-cards" id="summary-cards"></div>
       </div>
 
       <!-- Detailed Table -->
@@ -993,7 +929,7 @@
       lastAnalysisData = data;
       document.getElementById('results-area').classList.add('visible');
       renderChart();
-      renderSummaryCards();
+
       renderDetailTable();
     }
 
@@ -1216,40 +1152,6 @@
         if (lastAnalysisData) renderChart();
       });
     });
-
-    // Summary Cards
-    function renderSummaryCards() {
-      const keyMinutes = [0, 3, 5, 10];
-      const container = document.getElementById('summary-cards');
-
-      container.innerHTML = keyMinutes.map(min => {
-        const d = lastAnalysisData[min];
-        const advPct = ((d.advantage - 1) * 100).toFixed(1);
-        let favorClass, favorText;
-        if (d.advantage > 1.05) {
-          favorClass = 'dire';
-          favorText = `Dire favored +${advPct}%`;
-        } else if (d.advantage < 0.95) {
-          favorClass = 'radiant';
-          favorText = `Radiant favored +${((-1 * (d.advantage - 1)) * 100).toFixed(1)}%`;
-        } else {
-          favorClass = 'even';
-          favorText = 'Roughly even';
-        }
-
-        return `
-          <div class="summary-card">
-            <div class="minute-label">Minute ${min}</div>
-            <div class="level-label">Level ${d.level}</div>
-            <div class="favor ${favorClass}">${favorText}</div>
-            <div class="side-stats">
-              <span>Dire DPS: ${d.direDPS.toFixed(1)} | EHP: ${Math.round(d.direEHP)}</span>
-              <span>Radiant DPS: ${d.radiantDPS.toFixed(1)} | EHP: ${Math.round(d.radiantEHP)}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
 
     // Detailed Table
     function renderDetailTable() {
