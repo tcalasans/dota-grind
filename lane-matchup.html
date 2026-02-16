@@ -448,134 +448,28 @@
 
     .results-area.visible { display: block; }
 
-    /* Chart Section */
-    .chart-section {
-      margin-bottom: 24px;
+    .matchup-section {
+      margin-bottom: 32px;
     }
 
-    .metric-bar {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      justify-content: center;
-    }
-
-    .metric-btn {
-      padding: 7px 14px;
-      border-radius: 6px;
-      border: 1px solid #0f3460;
-      background: #1a1a2e;
-      color: #e0e0e0;
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: all 0.2s;
-    }
-
-    .metric-btn:hover { background: #0f3460; }
-    .metric-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
-
-    .chart-container {
-      background: #16213e;
-      border-radius: 8px;
-      border: 1px solid #0f3460;
-      padding: 16px;
-    }
-
-    .chart-container canvas {
-      width: 100%;
-      height: 360px;
-    }
-
-    .chart-legend {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      color: #ccc;
-    }
-
-    .legend-line {
-      width: 24px;
-      height: 3px;
-      border-radius: 2px;
-    }
-
-    .legend-line.dashed {
-      background: repeating-linear-gradient(
-        90deg,
-        currentColor 0px,
-        currentColor 6px,
-        transparent 6px,
-        transparent 10px
-      );
-      height: 2px;
-    }
-
-
-
-    /* Detailed Table */
-    .table-section {
-      margin-bottom: 24px;
-    }
-
-    .table-section h2 {
-      font-size: 1rem;
+    .section-title {
+      font-size: 1.1rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: #e94560;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       border-bottom: 1px solid #0f3460;
-      padding-bottom: 6px;
+      padding-bottom: 8px;
     }
 
-    .table-wrapper {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid #0f3460;
+    .section-subtitle {
+      font-size: 0.8rem;
+      color: #888;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      margin-left: 8px;
     }
-
-    .detail-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.75rem;
-      min-width: 900px;
-    }
-
-    .detail-table th, .detail-table td {
-      padding: 6px 8px;
-      text-align: center;
-      border-bottom: 1px solid #0f3460;
-      white-space: nowrap;
-    }
-
-    .detail-table thead th {
-      background: #1a1a2e;
-      color: #999;
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      position: sticky;
-      top: 0;
-    }
-
-    .detail-table thead th.dire-col { background: rgba(233, 69, 96, 0.15); color: #e94560; }
-    .detail-table thead th.radiant-col { background: rgba(39, 174, 96, 0.15); color: #27ae60; }
-    .detail-table thead th.combined-col { background: rgba(243, 156, 18, 0.15); color: #f39c12; }
-
-    .detail-table tbody tr:hover td { background: rgba(233, 69, 96, 0.05); }
-
-    .detail-table .advantage-cell.dire-fav { color: #e94560; font-weight: 600; }
-    .detail-table .advantage-cell.radiant-fav { color: #27ae60; font-weight: 600; }
-    .detail-table .advantage-cell.even { color: #f39c12; }
 
     .loading {
       text-align: center;
@@ -692,30 +586,16 @@
 
     <!-- Results -->
     <div class="results-area" id="results-area">
-      <!-- Chart -->
-      <div class="chart-section">
-        <div class="metric-bar" id="metric-bar">
-          <button class="metric-btn active" data-metric="ehp_phys">EHP (Physical)</button>
-          <button class="metric-btn" data-metric="ehp_magic">EHP (Magical)</button>
-          <button class="metric-btn" data-metric="dps">DPS</button>
-          <button class="metric-btn" data-metric="combined_dps">Combined DPS</button>
-          <button class="metric-btn" data-metric="combined_ehp">Combined EHP</button>
-          <button class="metric-btn" data-metric="advantage">Advantage</button>
-          <button class="metric-btn" data-metric="hp">HP</button>
-          <button class="metric-btn" data-metric="armor">Armor</button>
-        </div>
-        <div class="chart-container">
-          <canvas id="chart-canvas"></canvas>
-        </div>
-        <div class="chart-legend" id="chart-legend"></div>
+      <!-- Core Matchup: Offlaner vs Carry -->
+      <div class="matchup-section">
+        <h2 class="section-title">Core Matchup <span class="section-subtitle">Offlaner vs Carry</span></h2>
+        <div id="core-matchup"></div>
       </div>
 
-      <!-- Detailed Table -->
-      <div class="table-section">
-        <h2>Minute-by-Minute Breakdown</h2>
-        <div class="table-wrapper">
-          <table class="detail-table" id="detail-table"></table>
-        </div>
+      <!-- Support Matchup: Pos 4 vs Pos 5 -->
+      <div class="matchup-section">
+        <h2 class="section-title">Support Matchup <span class="section-subtitle">Pos 4 vs Pos 5</span></h2>
+        <div id="support-matchup"></div>
       </div>
     </div>
 
@@ -737,8 +617,6 @@
       pos4: META_SOFT_SUPPORT,
       pos5: META_HARD_SUPPORT,
     };
-    let lastAnalysisData = null;
-    let selectedMetric = 'ehp_phys';
 
     const slotLabels = {
       offlaner: 'Select Offlaner (Pos 3)',
@@ -932,308 +810,8 @@
     document.getElementById('analyze-btn').addEventListener('click', runAnalysis);
 
     function runAnalysis() {
-      const data = [];
-      for (let min = 0; min <= 10; min++) {
-        const level = getLevelAtMinute(min);
-        const off = calcHeroStats(slots.offlaner, level);
-        const p4 = calcHeroStats(slots.pos4, level);
-        const car = calcHeroStats(slots.carry, level);
-        const p5 = calcHeroStats(slots.pos5, level);
-
-        const direDPS = off.dps + p4.dps;
-        const radiantDPS = car.dps + p5.dps;
-        const direEHP = off.ehpPhys + p4.ehpPhys;
-        const radiantEHP = car.ehpPhys + p5.ehpPhys;
-        const advantage = (direEHP * direDPS) / (radiantEHP * radiantDPS);
-
-        data.push({ minute: min, level, off, p4, car, p5, direDPS, radiantDPS, direEHP, radiantEHP, advantage });
-      }
-
-      lastAnalysisData = data;
       document.getElementById('results-area').classList.add('visible');
-      renderChart();
-
-      renderDetailTable();
     }
-
-    // Chart
-    const HERO_COLORS = {
-      off: '#e94560',
-      p4: '#e8d44d',
-      car: '#27ae60',
-      p5: '#5ddef4',
-    };
-
-    function getSeriesForMetric(data, metric) {
-      const heroNames = {
-        off: slots.offlaner.localized_name,
-        p4: slots.pos4.localized_name,
-        car: slots.carry.localized_name,
-        p5: slots.pos5.localized_name,
-      };
-
-      switch (metric) {
-        case 'hp':
-          return [
-            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.hp) },
-            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.hp) },
-            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.hp) },
-            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.hp) },
-          ];
-        case 'armor':
-          return [
-            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.armor) },
-            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.armor) },
-            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.armor) },
-            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.armor) },
-          ];
-        case 'dps':
-          return [
-            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.dps) },
-            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.dps) },
-            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.dps) },
-            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.dps) },
-          ];
-        case 'ehp_phys':
-          return [
-            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.ehpPhys) },
-            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.ehpPhys) },
-            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.ehpPhys) },
-            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.ehpPhys) },
-          ];
-        case 'ehp_magic':
-          return [
-            { key: 'off', label: heroNames.off, color: HERO_COLORS.off, dashed: false, values: data.map(d => d.off.ehpMagic) },
-            { key: 'p4', label: heroNames.p4, color: HERO_COLORS.p4, dashed: true, values: data.map(d => d.p4.ehpMagic) },
-            { key: 'car', label: heroNames.car, color: HERO_COLORS.car, dashed: false, values: data.map(d => d.car.ehpMagic) },
-            { key: 'p5', label: heroNames.p5, color: HERO_COLORS.p5, dashed: true, values: data.map(d => d.p5.ehpMagic) },
-          ];
-        case 'combined_dps':
-          return [
-            { key: 'dire', label: 'Dire DPS', color: HERO_COLORS.off, dashed: false, values: data.map(d => d.direDPS) },
-            { key: 'radiant', label: 'Radiant DPS', color: HERO_COLORS.car, dashed: false, values: data.map(d => d.radiantDPS) },
-          ];
-        case 'combined_ehp':
-          return [
-            { key: 'dire', label: 'Dire EHP', color: HERO_COLORS.off, dashed: false, values: data.map(d => d.direEHP) },
-            { key: 'radiant', label: 'Radiant EHP', color: HERO_COLORS.car, dashed: false, values: data.map(d => d.radiantEHP) },
-          ];
-        case 'advantage':
-          return [
-            { key: 'adv', label: 'Advantage Ratio', color: '#f39c12', dashed: false, values: data.map(d => d.advantage) },
-          ];
-        default:
-          return [];
-      }
-    }
-
-    function renderChart() {
-      const canvas = document.getElementById('chart-canvas');
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.parentElement.getBoundingClientRect();
-      const w = rect.width - 32;
-      const h = 360;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-
-      const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, w, h);
-
-      const series = getSeriesForMetric(lastAnalysisData, selectedMetric);
-      if (!series.length) return;
-
-      const pad = { top: 20, right: 20, bottom: 36, left: 60 };
-      const plotW = w - pad.left - pad.right;
-      const plotH = h - pad.top - pad.bottom;
-
-      // Find min/max
-      let allVals = series.flatMap(s => s.values);
-      let minVal = Math.min(...allVals);
-      let maxVal = Math.max(...allVals);
-
-      // For advantage, include 1.0 reference
-      if (selectedMetric === 'advantage') {
-        minVal = Math.min(minVal, 0.8);
-        maxVal = Math.max(maxVal, 1.2);
-      }
-
-      const range = maxVal - minVal || 1;
-      const yMin = minVal - range * 0.08;
-      const yMax = maxVal + range * 0.08;
-
-      function xPos(i) { return pad.left + (i / 10) * plotW; }
-      function yPos(v) { return pad.top + (1 - (v - yMin) / (yMax - yMin)) * plotH; }
-
-      // Grid
-      ctx.strokeStyle = '#0f3460';
-      ctx.lineWidth = 0.5;
-      const gridLines = 5;
-      for (let i = 0; i <= gridLines; i++) {
-        const y = pad.top + (i / gridLines) * plotH;
-        ctx.beginPath();
-        ctx.moveTo(pad.left, y);
-        ctx.lineTo(w - pad.right, y);
-        ctx.stroke();
-      }
-      for (let i = 0; i <= 10; i++) {
-        const x = xPos(i);
-        ctx.beginPath();
-        ctx.moveTo(x, pad.top);
-        ctx.lineTo(x, pad.top + plotH);
-        ctx.stroke();
-      }
-
-      // Advantage reference line at 1.0
-      if (selectedMetric === 'advantage') {
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        const refY = yPos(1.0);
-        ctx.beginPath();
-        ctx.moveTo(pad.left, refY);
-        ctx.lineTo(w - pad.right, refY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = '#888';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('Even (1.0)', pad.left + 4, refY - 4);
-      }
-
-      // Axis labels
-      ctx.fillStyle = '#888';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      for (let i = 0; i <= 10; i++) {
-        ctx.fillText('Min ' + i, xPos(i), h - 8);
-      }
-
-      ctx.textAlign = 'right';
-      for (let i = 0; i <= gridLines; i++) {
-        const v = yMin + ((gridLines - i) / gridLines) * (yMax - yMin);
-        const y = pad.top + (i / gridLines) * plotH;
-        ctx.fillText(formatChartVal(v), pad.left - 6, y + 3);
-      }
-
-      // Draw series
-      series.forEach(s => {
-        ctx.strokeStyle = s.color;
-        ctx.lineWidth = 2.5;
-        if (s.dashed) ctx.setLineDash([8, 4]);
-        else ctx.setLineDash([]);
-
-        ctx.beginPath();
-        s.values.forEach((v, i) => {
-          const x = xPos(i);
-          const y = yPos(v);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Data points
-        s.values.forEach((v, i) => {
-          ctx.fillStyle = s.color;
-          ctx.beginPath();
-          ctx.arc(xPos(i), yPos(v), 3, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      });
-
-      // Legend
-      const legendEl = document.getElementById('chart-legend');
-      legendEl.innerHTML = series.map(s => {
-        if (s.dashed) {
-          return `<div class="legend-item">
-            <span class="legend-line" style="height:2px;background:repeating-linear-gradient(90deg,${s.color} 0px,${s.color} 6px,transparent 6px,transparent 10px)"></span>
-            ${s.label}
-          </div>`;
-        }
-        return `<div class="legend-item">
-          <span class="legend-line" style="background:${s.color}"></span>
-          ${s.label}
-        </div>`;
-      }).join('');
-    }
-
-    function formatChartVal(v) {
-      if (Math.abs(v) >= 1000) return (v / 1000).toFixed(1) + 'k';
-      return v.toFixed(1);
-    }
-
-    // Metric buttons
-    document.querySelectorAll('.metric-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedMetric = btn.dataset.metric;
-        if (lastAnalysisData) renderChart();
-      });
-    });
-
-    // Detailed Table
-    function renderDetailTable() {
-      const table = document.getElementById('detail-table');
-      const offName = slots.offlaner.localized_name;
-      const p4Name = slots.pos4.localized_name;
-      const carName = slots.carry.localized_name;
-      const p5Name = slots.pos5.localized_name;
-
-      let html = `
-        <thead>
-          <tr>
-            <th rowspan="2">Min</th>
-            <th rowspan="2">Lvl</th>
-            <th colspan="5" class="dire-col">${offName}</th>
-            <th colspan="5" class="dire-col">${p4Name}</th>
-            <th colspan="5" class="radiant-col">${carName}</th>
-            <th colspan="5" class="radiant-col">${p5Name}</th>
-            <th colspan="3" class="combined-col">Combined</th>
-          </tr>
-          <tr>
-            ${['dire-col','dire-col','radiant-col','radiant-col'].map(cls =>
-              `<th class="${cls}">HP</th><th class="${cls}">Arm</th><th class="${cls}">Dmg</th><th class="${cls}">DPS</th><th class="${cls}">EHP</th>`
-            ).join('')}
-            <th class="combined-col">D.DPS</th>
-            <th class="combined-col">R.DPS</th>
-            <th class="combined-col">Adv</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
-
-      lastAnalysisData.forEach(d => {
-        const advClass = d.advantage > 1.05 ? 'dire-fav' : d.advantage < 0.95 ? 'radiant-fav' : 'even';
-        html += `<tr>
-          <td>${d.minute}</td>
-          <td>${d.level}</td>
-          ${heroStatCells(d.off)}
-          ${heroStatCells(d.p4)}
-          ${heroStatCells(d.car)}
-          ${heroStatCells(d.p5)}
-          <td>${d.direDPS.toFixed(1)}</td>
-          <td>${d.radiantDPS.toFixed(1)}</td>
-          <td class="advantage-cell ${advClass}">${d.advantage.toFixed(2)}</td>
-        </tr>`;
-      });
-
-      html += '</tbody>';
-      table.innerHTML = html;
-    }
-
-    function heroStatCells(s) {
-      return `<td>${Math.round(s.hp)}</td><td>${s.armor.toFixed(1)}</td><td>${Math.round(s.damage)}</td><td>${s.dps.toFixed(1)}</td><td>${Math.round(s.ehpPhys)}</td>`;
-    }
-
-    // Window resize
-    window.addEventListener('resize', () => {
-      if (lastAnalysisData) renderChart();
-    });
 
     // Sidebar toggle
     document.getElementById('sidebar-toggle').addEventListener('click', () => {
