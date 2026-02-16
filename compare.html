@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Comparison - Dota 2</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      min-height: 100vh;
+      background: #0f1a2e;
+      border-right: 1px solid #0f3460;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 200;
+      transition: transform 0.3s;
+    }
+
+    .sidebar-brand {
+      padding: 20px 16px;
+      border-bottom: 2px solid #e94560;
+      text-align: center;
+    }
+
+    .sidebar-brand h2 {
+      font-size: 1.1rem;
+      color: #e94560;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-brand span {
+      font-size: 0.65rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .sidebar nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar nav a:hover {
+      color: #e0e0e0;
+      background: rgba(233, 69, 96, 0.05);
+    }
+
+    .sidebar nav a.active {
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.1);
+      border-left-color: #e94560;
+    }
+
+    .sidebar nav a .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 220px;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 300;
+      background: #0f1a2e;
+      border: 1px solid #0f3460;
+      color: #e0e0e0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 199;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-toggle { display: block; }
+      .main-content { margin-left: 0; }
+    }
+
+    header {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #e94560;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #e94560;
+      letter-spacing: 2px;
+    }
+
+    /* Controls */
+    .controls {
+      background: #16213e;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .control-row .label {
+      font-size: 0.8rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      min-width: 70px;
+    }
+
+    .ctrl-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .ctrl-btn:hover { background: #0f3460; }
+    .ctrl-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+
+    /* Tier columns */
+    .tier-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .tier-column {
+      background: #16213e;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #0f3460;
+    }
+
+    .tier-header {
+      padding: 10px 14px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    .tier-header.tier-top { background: #27ae60; }
+    .tier-header.tier-high { background: #f39c12; }
+    .tier-header.tier-mid { background: #e67e22; }
+    .tier-header.tier-low { background: #c0392b; }
+
+    .tier-body {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tier-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      background: #1a1a2e;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      transition: background 0.15s;
+    }
+
+    .tier-card:hover { background: #0f3460; }
+
+    .tier-card img {
+      width: 40px;
+      height: 22px;
+      object-fit: cover;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .tier-card .hero-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tier-card .stat-val {
+      font-weight: 600;
+      color: #e94560;
+      white-space: nowrap;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #999;
+      font-size: 1.1rem;
+    }
+
+    @media (max-width: 900px) {
+      .tier-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .tier-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>DOTA 2</h2>
+      <span>Analysis</span>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="nav-icon">&#9813;</span>
+        Hero Stats
+      </a>
+      <a href="compare.html" class="active">
+        <span class="nav-icon">&#9878;</span>
+        Hero Comparison
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header>
+      <h1>Hero Comparison Tool</h1>
+    </header>
+
+    <div class="controls">
+      <div class="control-row">
+        <span class="label">Dimension</span>
+        <button class="ctrl-btn active" data-dim="hp">HP</button>
+        <button class="ctrl-btn" data-dim="mana">Mana</button>
+        <button class="ctrl-btn" data-dim="armor">Base Armor</button>
+        <button class="ctrl-btn" data-dim="mr">Magic Resistance</button>
+        <button class="ctrl-btn" data-dim="dmg">Base Damage</button>
+        <button class="ctrl-btn" data-dim="hpregen">HP Regen</button>
+        <button class="ctrl-btn" data-dim="manaregen">Mana Regen</button>
+      </div>
+      <div class="control-row">
+        <span class="label">Level</span>
+        <button class="ctrl-btn level-btn active" data-level="1">1</button>
+        <button class="ctrl-btn level-btn" data-level="5">5</button>
+        <button class="ctrl-btn level-btn" data-level="10">10</button>
+        <button class="ctrl-btn level-btn" data-level="15">15</button>
+        <button class="ctrl-btn level-btn" data-level="20">20</button>
+        <button class="ctrl-btn level-btn" data-level="25">25</button>
+        <button class="ctrl-btn level-btn" data-level="30">30</button>
+      </div>
+    </div>
+
+    <div id="results">
+      <div class="loading">Loading heroes...</div>
+    </div>
+  </div>
+
+  <script>
+    const CDN = 'https://cdn.cloudflare.steamstatic.com';
+    let heroes = [];
+    let selectedDim = 'hp';
+    let selectedLevel = 1;
+
+    async function loadHeroes() {
+      const res = await fetch('https://api.opendota.com/api/heroStats');
+      heroes = await res.json();
+      heroes.sort((a, b) => a.localized_name.localeCompare(b.localized_name));
+      render();
+    }
+
+    function getAttributes(h, level) {
+      const gained = level - 1;
+      return {
+        str: h.base_str + h.str_gain * gained,
+        agi: h.base_agi + h.agi_gain * gained,
+        int: h.base_int + h.int_gain * gained,
+      };
+    }
+
+    function calcStat(h, dim, level) {
+      const { str, agi, int } = getAttributes(h, level);
+      switch (dim) {
+        case 'hp':
+          return h.base_health + str * 22;
+        case 'mana':
+          return h.base_mana + int * 12;
+        case 'armor':
+          return h.base_armor + agi * 0.167;
+        case 'mr':
+          return h.base_mr + int * 0.1;
+        case 'dmg': {
+          const baseDmg = (h.base_attack_min + h.base_attack_max) / 2;
+          let bonus;
+          if (h.primary_attr === 'str') bonus = str;
+          else if (h.primary_attr === 'agi') bonus = agi;
+          else if (h.primary_attr === 'int') bonus = int;
+          else bonus = (str + agi + int) * 0.7; // universal
+          return baseDmg + bonus;
+        }
+        case 'hpregen':
+          return h.base_health_regen + str * 0.1;
+        case 'manaregen':
+          return h.base_mana_regen + int * 0.05;
+      }
+    }
+
+    function formatStat(value, dim) {
+      if (dim === 'armor' || dim === 'hpregen' || dim === 'manaregen') return value.toFixed(1);
+      if (dim === 'mr') return value.toFixed(1) + '%';
+      if (dim === 'dmg') return Math.round(value);
+      return Math.round(value);
+    }
+
+    function render() {
+      const entries = heroes.map(h => ({
+        hero: h,
+        value: calcStat(h, selectedDim, selectedLevel),
+      }));
+
+      // Sort ascending for percentile calculation
+      const sorted = [...entries].sort((a, b) => a.value - b.value);
+      const n = sorted.length;
+      const p25 = sorted[Math.floor(n * 0.25)].value;
+      const p50 = sorted[Math.floor(n * 0.50)].value;
+      const p75 = sorted[Math.floor(n * 0.75)].value;
+
+      const buckets = [[], [], [], []]; // 75-100, 50-75, 25-50, 0-25
+      for (const entry of entries) {
+        if (entry.value >= p75) buckets[0].push(entry);
+        else if (entry.value >= p50) buckets[1].push(entry);
+        else if (entry.value >= p25) buckets[2].push(entry);
+        else buckets[3].push(entry);
+      }
+
+      // Sort each bucket descending
+      for (const bucket of buckets) {
+        bucket.sort((a, b) => b.value - a.value);
+      }
+
+      const tierMeta = [
+        { label: '75 - 100', cls: 'tier-top' },
+        { label: '50 - 75', cls: 'tier-high' },
+        { label: '25 - 50', cls: 'tier-mid' },
+        { label: '0 - 25', cls: 'tier-low' },
+      ];
+
+      const html = `<div class="tier-container">${buckets.map((bucket, i) => `
+        <div class="tier-column">
+          <div class="tier-header ${tierMeta[i].cls}">${tierMeta[i].label}</div>
+          <div class="tier-body">
+            ${bucket.map(e => `
+              <div class="tier-card">
+                <img src="${CDN}${e.hero.img}" alt="${e.hero.localized_name}" loading="lazy">
+                <span class="hero-name">${e.hero.localized_name}</span>
+                <span class="stat-val">${formatStat(e.value, selectedDim)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}</div>`;
+
+      document.getElementById('results').innerHTML = html;
+    }
+
+    // Dimension buttons
+    document.querySelectorAll('[data-dim]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-dim]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedDim = btn.dataset.dim;
+        render();
+      });
+    });
+
+    // Level buttons
+    document.querySelectorAll('.level-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedLevel = parseInt(btn.dataset.level);
+        render();
+      });
+    });
+
+    // Sidebar toggle
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    });
+    document.getElementById('sidebar-overlay').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    });
+
+    loadHeroes();
+  </script>
+</body>
+</html>
