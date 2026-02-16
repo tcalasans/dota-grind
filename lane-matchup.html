@@ -681,9 +681,32 @@
       return { str, agi, int, hp, mana, armor, mr, hpRegen, manaRegen, damage, dps, ehpPhys, ehpMagic, level };
     }
 
+    // URL sync
+    function syncURL() {
+      const params = new URLSearchParams();
+      for (const [slot, hero] of Object.entries(slots)) {
+        if (hero) params.set(slot, hero.id);
+      }
+      const qs = params.toString();
+      history.replaceState(null, '', qs ? '?' + qs : location.pathname);
+    }
+
+    function loadFromURL() {
+      const params = new URLSearchParams(location.search);
+      for (const slot of Object.keys(slots)) {
+        const id = parseInt(params.get(slot));
+        if (id) {
+          const hero = heroes.find(h => h.id === id);
+          if (hero) slots[slot] = hero;
+        }
+      }
+    }
+
     // Load heroes
     function loadHeroes() {
       heroes = [...HEROES].sort((a, b) => a.localized_name.localeCompare(b.localized_name));
+      loadFromURL();
+      for (const slot of Object.keys(slots)) renderSlot(slot);
       document.getElementById('loading-msg').style.display = 'none';
     }
 
@@ -716,6 +739,7 @@
     function clearSlot(slotId) {
       slots[slotId] = null;
       renderSlot(slotId);
+      syncURL();
     }
 
     function updateAnalyzeBtn() {
@@ -779,6 +803,7 @@
       if (!hero) return;
       slots[activeSlot] = hero;
       renderSlot(activeSlot);
+      syncURL();
       closePicker();
     }
 
