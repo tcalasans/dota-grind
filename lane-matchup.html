@@ -730,7 +730,12 @@
     let activeSlot = null;
     let pickerAttrFilter = 'all-heroes';
     let pickerMetaFilter = false;
-    const metaHeroNames = new Set(META_ALL.flatMap(arr => arr.slice(0, 5)));
+    const SLOT_META = {
+      carry: META_CARRY,
+      offlaner: META_OFFLANER,
+      pos4: META_SOFT_SUPPORT,
+      pos5: META_HARD_SUPPORT,
+    };
     let lastAnalysisData = null;
     let selectedMetric = 'ehp_phys';
 
@@ -866,12 +871,18 @@
       const usedIds = Object.values(slots).filter(s => s).map(s => s.id);
       const grid = document.getElementById('picker-grid');
 
-      const filtered = heroes.filter(h => {
+      const metaList = pickerMetaFilter ? (SLOT_META[activeSlot] || []).slice(0, 5) : null;
+
+      let filtered = heroes.filter(h => {
         const matchName = h.localized_name.toLowerCase().includes(search);
         const matchAttr = pickerAttrFilter === 'all-heroes' || h.primary_attr === pickerAttrFilter;
-        const matchMeta = !pickerMetaFilter || metaHeroNames.has(h.localized_name);
+        const matchMeta = !metaList || metaList.includes(h.localized_name);
         return matchName && matchAttr && matchMeta;
       });
+
+      if (metaList) {
+        filtered.sort((a, b) => metaList.indexOf(a.localized_name) - metaList.indexOf(b.localized_name));
+      }
 
       grid.innerHTML = filtered.map(h => {
         const used = usedIds.includes(h.id);
