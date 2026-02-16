@@ -1,6 +1,6 @@
 ---
 name: fetch-abilities
-description: Fetches hero abilities from OpenDota API and saves to resources/hero-abilities.js and resources/abilities.js
+description: Fetches hero abilities from OpenDota API and saves to app/resources/hero-abilities.js and app/resources/abilities.js
 ---
 
 # Fetch Abilities
@@ -16,12 +16,12 @@ description: Fetches hero abilities from OpenDota API and saves to resources/her
 - This returns detailed info for every ability (name, description, cooldown, mana cost, etc.)
 
 ### Step 3: Write hero-abilities.js
-- Write the hero_abilities JSON into `resources/hero-abilities.js` as `const HERO_ABILITIES = { ... }`
+- Write the hero_abilities JSON into `app/resources/hero-abilities.js` as `const HERO_ABILITIES = { ... }`
 - Add a header comment with the source URL and the current date
 - Pretty-print with 2-space indentation
 
 ### Step 4: Write abilities.js
-- Write the abilities JSON into `resources/abilities.js` as `const ABILITIES = { ... }`
+- Write the abilities JSON into `app/resources/abilities.js` as `const ABILITIES = { ... }`
 - Add a header comment with the source URL and the current date
 - Pretty-print with 2-space indentation
 - Note: this file will be large (~3MB+)

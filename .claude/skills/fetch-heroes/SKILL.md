@@ -1,6 +1,6 @@
 ---
 name: fetch-heroes
-description: Fetches hero stats from OpenDota API and saves to resources/heroes.js
+description: Fetches hero stats from OpenDota API and saves to app/resources/heroes.js
 ---
 
 # Fetch Heroes
@@ -12,7 +12,7 @@ description: Fetches hero stats from OpenDota API and saves to resources/heroes.
 - Use curl to download the JSON
 
 ### Step 2: Write heroes.js
-- Write the JSON response into `resources/heroes.js` as a `const HEROES` array
+- Write the JSON response into `app/resources/heroes.js` as a `const HEROES` array
 - Add a header comment with the source URL and the current date
 - Add a comment with the total hero count
 - Pretty-print the JSON with 2-space indentation
