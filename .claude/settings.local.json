@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "WebFetch(domain:dota2protracker.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.dotabuff.com)",
+      "WebFetch(domain:stratz.com)",
+      "WebFetch(domain:api.opendota.com)",
+      "WebSearch",
+      "WebFetch(domain:hawk.live)",
+      "WebFetch(domain:immortaldraft.com)"
     ]
   }
 }
