@@ -689,14 +689,12 @@
     </div>
   </div>
 
-  <script src="resources/heroes.js"></script>
+  <script src="resources/quizzes.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     const TOTAL_ROUNDS = 30;
     const ROUND_DURATION = 3000;
     const DOT_LIFETIME = 1000;
-
-    const heroes = [...HEROES].sort((a, b) => a.localized_name.localeCompare(b.localized_name));
 
     // State
     let round = 0;
@@ -708,6 +706,7 @@
     let globalTimerInterval = null;
     let dotTimeout = null;
     let gameStartTime = 0;
+    let usedQuizIndices = [];
 
     // DOM
     const $pregame = document.getElementById('pregame-screen');
@@ -733,102 +732,19 @@
       screen.classList.add('active');
     }
 
-    function randomHero() {
-      return heroes[Math.floor(Math.random() * heroes.length)];
-    }
-
-    function shuffle(arr) {
-      const a = [...arr];
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
-    function attrLabel(attr) {
-      return { str: 'Strength', agi: 'Agility', int: 'Intelligence', all: 'Universal' }[attr] || attr;
-    }
-
-    // Question generators
-    function genPrimaryAttr() {
-      const hero = randomHero();
-      return {
-        img: CDN + hero.img,
-        text: `What is ${hero.localized_name}'s primary attribute?`,
-        options: shuffle(['Strength', 'Agility', 'Intelligence', 'Universal']),
-        answer: attrLabel(hero.primary_attr)
-      };
-    }
-
-    function genAttackType() {
-      const hero = randomHero();
-      return {
-        img: CDN + hero.img,
-        text: `Is ${hero.localized_name} Melee or Ranged?`,
-        options: ['Melee', 'Ranged'],
-        answer: hero.attack_type
-      };
-    }
-
-    function genIdentifyHero() {
-      const hero = randomHero();
-      let others = [];
-      while (others.length < 3) {
-        const h = randomHero();
-        if (h.id !== hero.id && !others.find(o => o.id === h.id)) {
-          others.push(h);
-        }
-      }
-      return {
-        img: CDN + hero.img,
-        text: 'Who is this hero?',
-        options: shuffle([hero.localized_name, ...others.map(h => h.localized_name)]),
-        answer: hero.localized_name
-      };
-    }
-
-    function genRoleCheck() {
-      const hero = randomHero();
-      const allRoles = ['Carry', 'Support', 'Nuker', 'Disabler', 'Durable', 'Escape', 'Pusher', 'Initiator'];
-      const role = allRoles[Math.floor(Math.random() * allRoles.length)];
-      const hasRole = hero.roles.includes(role);
-      return {
-        img: CDN + hero.img,
-        text: `Is ${hero.localized_name} a ${role}?`,
-        options: ['Yes', 'No'],
-        answer: hasRole ? 'Yes' : 'No'
-      };
-    }
-
-    function genStatComparison() {
-      const statKey = ['str', 'agi', 'int'][Math.floor(Math.random() * 3)];
-      const statName = { str: 'STR', agi: 'AGI', int: 'INT' }[statKey];
-      const baseProp = 'base_' + statKey;
-      let h1 = randomHero();
-      let h2 = randomHero();
-      while (h2.id === h1.id || h1[baseProp] === h2[baseProp]) {
-        h2 = randomHero();
-      }
-      const winner = h1[baseProp] > h2[baseProp] ? h1 : h2;
-      // Show the hero with higher stat's image, or just the first hero
-      return {
-        img: CDN + h1.img,
-        text: `Who has higher base ${statName}?`,
-        options: shuffle([h1.localized_name, h2.localized_name]),
-        answer: winner.localized_name
-      };
-    }
-
-    const questionGens = [genPrimaryAttr, genAttackType, genIdentifyHero, genRoleCheck, genStatComparison];
-
     function generateQuestion() {
-      const gen = questionGens[Math.floor(Math.random() * questionGens.length)];
-      const q = gen();
+      if (usedQuizIndices.length >= QUIZZES.length) usedQuizIndices = [];
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * QUIZZES.length);
+      } while (usedQuizIndices.includes(idx));
+      usedQuizIndices.push(idx);
+      const q = QUIZZES[idx];
+
       correctAnswer = q.answer;
       answered = false;
 
-      $quizImg.src = q.img;
+      $quizImg.src = CDN + q.img;
       $quizQuestion.textContent = q.text;
       $quizFeedback.textContent = '';
       $quizFeedback.className = 'quiz-feedback';
@@ -940,6 +856,7 @@
       round = 0;
       quizScore = 0;
       clickScore = 0;
+      usedQuizIndices = [];
       $hudQuiz.textContent = '0';
       $hudClicks.textContent = '0';
       $hudRound.textContent = '0 / ' + TOTAL_ROUNDS;
