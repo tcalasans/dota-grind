@@ -1,9 +1,9 @@
 ---
-name: generate-quizzes
-description: Generates hero trivia quiz bank from heroes.js and saves to app/resources/quizzes.js
+name: generate-hero-trivia-quizzes
+description: Generates hero trivia quiz bank from heroes.js and saves to app/resources/hero-trivia-quizzes.js
 ---
 
-# Generate Quizzes
+# Generate Hero Trivia Quizzes
 
 ## Instructions
 
@@ -11,7 +11,7 @@ description: Generates hero trivia quiz bank from heroes.js and saves to app/res
 - Read `app/resources/heroes.js` to understand the hero data structure
 
 ### Step 2: Write and run quiz generator script
-- Write a temporary Node.js script at `app/resources/_gen-quizzes.tmp.js` that:
+- Write a temporary Node.js script at `app/resources/_gen-hero-trivia-quizzes.tmp.js` that:
   - Reads `heroes.js` by stripping the `const HEROES = ` prefix (and preceding comments/blank lines) and parsing the rest as JSON
   - Generates questions for all 5 types:
 
@@ -28,19 +28,19 @@ description: Generates hero trivia quiz bank from heroes.js and saves to app/res
     - `options` are pre-shuffled where applicable
     - `answer` is always one of the `options` values
   - Shuffles the entire array at the end
-  - Writes output to `app/resources/quizzes.js` as:
+  - Writes output to `app/resources/hero-trivia-quizzes.js` as:
     ```js
     // Auto-generated hero trivia quiz bank
     // Source: app/resources/heroes.js
     // Generated: <date>
     // Total: <N> questions
-    const QUIZZES = [ ... ];
+    const HERO_TRIVIA_QUIZZES = [ ... ];
     ```
   - Pretty-print with 2-space indentation
-- Run the script with `node app/resources/_gen-quizzes.tmp.js`
+- Run the script with `node app/resources/_gen-hero-trivia-quizzes.tmp.js`
 
 ### Step 3: Clean up
-- Delete the temporary script `app/resources/_gen-quizzes.tmp.js`
+- Delete the temporary script `app/resources/_gen-hero-trivia-quizzes.tmp.js`
 
 ### Step 4: Report
 - Report the total question count from the generated file

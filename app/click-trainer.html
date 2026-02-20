@@ -689,7 +689,7 @@
     </div>
   </div>
 
-  <script src="resources/quizzes.js"></script>
+  <script src="resources/hero-trivia-quizzes.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     const TOTAL_ROUNDS = 30;
@@ -733,13 +733,13 @@
     }
 
     function generateQuestion() {
-      if (usedQuizIndices.length >= QUIZZES.length) usedQuizIndices = [];
+      if (usedQuizIndices.length >= HERO_TRIVIA_QUIZZES.length) usedQuizIndices = [];
       let idx;
       do {
-        idx = Math.floor(Math.random() * QUIZZES.length);
+        idx = Math.floor(Math.random() * HERO_TRIVIA_QUIZZES.length);
       } while (usedQuizIndices.includes(idx));
       usedQuizIndices.push(idx);
-      const q = QUIZZES[idx];
+      const q = HERO_TRIVIA_QUIZZES[idx];
 
       correctAnswer = q.answer;
       answered = false;

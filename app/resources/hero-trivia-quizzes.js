@@ -2,7 +2,7 @@
 // Source: app/resources/heroes.js
 // Generated: 2026-02-20
 // Total: 735 questions
-const QUIZZES = [
+const HERO_TRIVIA_QUIZZES = [
   {
     "img": "/apps/dota2/images/dota_react/heroes/faceless_void.png?",
     "text": "Is Faceless Void a Disabler?",
