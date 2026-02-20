@@ -714,6 +714,7 @@
       selectedBoot = bootKey ? bootItems.find(b => b.key === bootKey) || null : null;
       renderBootOptions();
       updatePreviewStats();
+      updateQueryParams();
       // Update HUD if simulation is running
       if (document.getElementById('game-screen').classList.contains('active') && selectedHero) {
         moveSpeed = getBootMoveSpeed(selectedHero);
@@ -730,6 +731,17 @@
       if (statsEl) {
         statsEl.innerHTML = `Move Speed: ${ms} &nbsp;|&nbsp; Turn Rate: ${tr}`;
       }
+    }
+
+    function updateQueryParams() {
+      const params = new URLSearchParams();
+      if (selectedHero) {
+        params.set('hero', selectedHero.localized_name);
+        if (selectedBoot) params.set('boots', selectedBoot.key);
+      }
+      const qs = params.toString();
+      const url = window.location.pathname + (qs ? '?' + qs : '');
+      history.replaceState(null, '', url);
     }
 
     function renderPickerGrid() {
@@ -768,6 +780,7 @@
       `;
 
       renderBootOptions();
+      updateQueryParams();
       document.getElementById('btn-start').disabled = false;
       closePicker();
     }
@@ -1040,6 +1053,29 @@
     // Init
     loadHeroes();
     loadBootItems();
+
+    // Query params: ?hero=Anti-Mage&boots=phase_boots
+    (function initFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const heroParam = params.get('hero');
+      if (!heroParam) return;
+
+      const hero = heroes.find(h =>
+        h.localized_name.toLowerCase() === heroParam.toLowerCase() ||
+        h.name === heroParam ||
+        h.name === 'npc_dota_hero_' + heroParam
+      );
+      if (!hero) return;
+
+      selectedHero = hero;
+
+      const bootsParam = params.get('boots');
+      if (bootsParam) {
+        selectedBoot = bootItems.find(b => b.key === bootsParam) || null;
+      }
+
+      startSimulation();
+    })();
   </script>
 </body>
 </html>
