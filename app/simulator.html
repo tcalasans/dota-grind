@@ -847,11 +847,34 @@
     // ── Section F: HUD rendering (handled via DOM) ────────────────────
 
     // ── Section G: Click Handler ──────────────────────────────────────
+    let rightMouseDown = false;
+    let lastMouseX = 0, lastMouseY = 0;
+
     function onCanvasClick(e) {
       const rect = canvas.getBoundingClientRect();
       targetX = e.clientX - rect.left;
       targetY = e.clientY - rect.top;
       clickMarkers.push({ x: targetX, y: targetY, time: performance.now() });
+    }
+
+    function onCanvasMouseDown(e) {
+      if (e.button === 2) {
+        rightMouseDown = true;
+        onCanvasClick(e);
+      }
+    }
+
+    function onCanvasMouseMove(e) {
+      if (!rightMouseDown) return;
+      const rect = canvas.getBoundingClientRect();
+      lastMouseX = e.clientX - rect.left;
+      lastMouseY = e.clientY - rect.top;
+      targetX = lastMouseX;
+      targetY = lastMouseY;
+    }
+
+    function onCanvasMouseUp(e) {
+      if (e.button === 2) rightMouseDown = false;
     }
 
     // ── Section H: Game Loop ──────────────────────────────────────────
@@ -1031,10 +1054,11 @@
     });
 
     // Canvas click
-    document.getElementById('canvas').addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      onCanvasClick(e);
-    });
+    const canvasEl = document.getElementById('canvas');
+    canvasEl.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvasEl.addEventListener('mousedown', onCanvasMouseDown);
+    canvasEl.addEventListener('mousemove', onCanvasMouseMove);
+    document.addEventListener('mouseup', onCanvasMouseUp);
 
     // Window resize
     window.addEventListener('resize', () => {
