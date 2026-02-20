@@ -232,6 +232,77 @@
       flex-wrap: wrap;
     }
 
+    /* Boots selector */
+    .boots-selector {
+      margin-bottom: 24px;
+    }
+
+    .boots-selector label {
+      display: block;
+      font-size: 0.8rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .boots-options {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .boot-option {
+      background: #1a1a2e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      padding: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 72px;
+    }
+
+    .boot-option:hover { border-color: #1a4a7a; }
+    .boot-option.selected { border-color: #e94560; background: rgba(233, 69, 96, 0.1); }
+
+    .boot-option img {
+      width: 36px;
+      height: 27px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .boot-option .boot-none-icon {
+      width: 36px;
+      height: 27px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .boot-option .boot-label {
+      font-size: 0.55rem;
+      color: #999;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .boot-option.selected .boot-label { color: #e0e0e0; }
+
+    .boot-option .boot-ms {
+      font-size: 0.5rem;
+      color: #27ae60;
+      margin-top: 2px;
+    }
+
     /* Game screen */
     #game-screen {
       flex: 1;
@@ -490,6 +561,10 @@
         <div class="hero-preview" id="hero-preview">
           <span class="placeholder-text">No hero selected</span>
         </div>
+        <div class="boots-selector" id="boots-selector" style="display:none">
+          <label>Boots</label>
+          <div class="boots-options" id="boots-options"></div>
+        </div>
         <div class="intro-buttons">
           <button class="btn btn-select" id="btn-select" onclick="openPicker()">Select a Hero</button>
           <button class="btn btn-start" id="btn-start" disabled onclick="startSimulation()">Start Simulation</button>
@@ -503,6 +578,7 @@
         <span class="hud-hero-name" id="hud-name"></span>
         <span class="hud-stat">Move Speed: <span id="hud-ms"></span></span>
         <span class="hud-stat">Turn Rate: <span id="hud-tr"></span></span>
+        <span class="hud-stat">Boots: <span id="hud-boots">None</span></span>
         <span class="hud-spacer"></span>
         <button class="btn-change" onclick="changeHero()">Change Hero</button>
       </div>
@@ -534,6 +610,7 @@
 
   <script src="resources/heroes.js"></script>
   <script src="resources/meta.js"></script>
+  <script src="resources/items.js"></script>
   <script>
     // ── Section A: Constants ──────────────────────────────────────────
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
@@ -544,7 +621,9 @@
 
     // ── Section B: State ──────────────────────────────────────────────
     let heroes = [];
+    let bootItems = [];
     let selectedHero = null;
+    let selectedBoot = null; // null = no boots
     let pickerAttrFilter = 'all-heroes';
     let pickerMetaFilter = false;
 
@@ -585,6 +664,74 @@
       return names;
     }
 
+    function loadBootItems() {
+      if (typeof ITEMS === 'undefined') return;
+      // Boot items either have the hint about stacking or are base boots
+      const BOOT_KEYS = ['boots', 'phase_boots', 'power_treads', 'travel_boots', 'travel_boots_2',
+        'arcane_boots', 'tranquil_boots', 'guardian_greaves', 'boots_of_bearing'];
+      bootItems = BOOT_KEYS
+        .filter(k => ITEMS[k])
+        .map(k => {
+          const item = ITEMS[k];
+          let ms = 0;
+          for (const attr of (item.attrib || [])) {
+            if (['bonus_movement_speed', 'bonus_movement', 'bonus_movement_speed_melee'].includes(attr.key)) {
+              ms = Math.max(ms, parseInt(attr.value) || 0);
+            }
+          }
+          return { key: k, dname: item.dname, img: item.img, ms };
+        })
+        .sort((a, b) => a.ms - b.ms);
+    }
+
+    function getBootMoveSpeed(hero) {
+      if (!selectedBoot) return hero.move_speed;
+      return hero.move_speed + selectedBoot.ms;
+    }
+
+    function renderBootOptions() {
+      const container = document.getElementById('boots-options');
+      const selector = document.getElementById('boots-selector');
+      if (!bootItems.length) { selector.style.display = 'none'; return; }
+      selector.style.display = '';
+
+      let html = `<div class="boot-option ${!selectedBoot ? 'selected' : ''}" onclick="selectBoot(null)">
+        <div class="boot-none-icon">&times;</div>
+        <span class="boot-label">None</span>
+      </div>`;
+      for (const boot of bootItems) {
+        const sel = selectedBoot && selectedBoot.key === boot.key ? 'selected' : '';
+        html += `<div class="boot-option ${sel}" onclick="selectBoot('${boot.key}')">
+          <img src="${CDN}${boot.img}" alt="${boot.dname}" loading="lazy">
+          <span class="boot-label">${boot.dname}</span>
+          <span class="boot-ms">+${boot.ms}</span>
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function selectBoot(bootKey) {
+      selectedBoot = bootKey ? bootItems.find(b => b.key === bootKey) || null : null;
+      renderBootOptions();
+      updatePreviewStats();
+      // Update HUD if simulation is running
+      if (document.getElementById('game-screen').classList.contains('active') && selectedHero) {
+        moveSpeed = getBootMoveSpeed(selectedHero);
+        document.getElementById('hud-ms').textContent = moveSpeed;
+        document.getElementById('hud-boots').textContent = selectedBoot ? selectedBoot.dname : 'None';
+      }
+    }
+
+    function updatePreviewStats() {
+      if (!selectedHero) return;
+      const tr = selectedHero.turn_rate != null ? selectedHero.turn_rate : DEFAULT_TURN_RATE;
+      const ms = getBootMoveSpeed(selectedHero);
+      const statsEl = document.querySelector('.hero-stats-preview');
+      if (statsEl) {
+        statsEl.innerHTML = `Move Speed: ${ms} &nbsp;|&nbsp; Turn Rate: ${tr}`;
+      }
+    }
+
     function renderPickerGrid() {
       const search = document.getElementById('picker-search').value.toLowerCase();
       const grid = document.getElementById('picker-grid');
@@ -612,13 +759,15 @@
       selectedHero = hero;
 
       const tr = hero.turn_rate != null ? hero.turn_rate : DEFAULT_TURN_RATE;
+      const ms = getBootMoveSpeed(hero);
       const preview = document.getElementById('hero-preview');
       preview.innerHTML = `
         <img src="${CDN}${hero.img}" alt="${hero.localized_name}">
         <span class="hero-name">${hero.localized_name}</span>
-        <span class="hero-stats-preview">Move Speed: ${hero.move_speed} &nbsp;|&nbsp; Turn Rate: ${tr}</span>
+        <span class="hero-stats-preview">Move Speed: ${ms} &nbsp;|&nbsp; Turn Rate: ${tr}</span>
       `;
 
+      renderBootOptions();
       document.getElementById('btn-start').disabled = false;
       closePicker();
     }
@@ -632,12 +781,13 @@
     function startSimulation() {
       if (!selectedHero) return;
 
-      moveSpeed = selectedHero.move_speed;
+      moveSpeed = getBootMoveSpeed(selectedHero);
       turnRate = selectedHero.turn_rate != null ? selectedHero.turn_rate : DEFAULT_TURN_RATE;
 
       document.getElementById('hud-name').textContent = selectedHero.localized_name;
       document.getElementById('hud-ms').textContent = moveSpeed;
       document.getElementById('hud-tr').textContent = turnRate;
+      document.getElementById('hud-boots').textContent = selectedBoot ? selectedBoot.dname : 'None';
 
       showScreen('game-screen');
       initCanvas();
@@ -860,6 +1010,11 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closePicker();
+      if ((e.key === 's' || e.key === 'S') && document.getElementById('game-screen').classList.contains('active')
+          && !document.getElementById('picker-overlay').classList.contains('open')) {
+        targetX = null;
+        targetY = null;
+      }
     });
 
     // Canvas click
@@ -884,6 +1039,7 @@
 
     // Init
     loadHeroes();
+    loadBootItems();
   </script>
 </body>
 </html>
