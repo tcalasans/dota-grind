@@ -379,6 +379,7 @@
     .picker-filter-btn.agi.active { background: #27ae60; border-color: #27ae60; }
     .picker-filter-btn.int.active { background: #2980b9; border-color: #2980b9; }
     .picker-filter-btn.all.active { background: #8e44ad; border-color: #8e44ad; }
+    .picker-filter-btn.meta.active { background: #f39c12; border-color: #f39c12; }
 
     .picker-grid {
       display: grid;
@@ -525,12 +526,14 @@
         <button class="picker-filter-btn agi" data-attr="agi">AGI</button>
         <button class="picker-filter-btn int" data-attr="int">INT</button>
         <button class="picker-filter-btn all" data-attr="all">UNI</button>
+        <button class="picker-filter-btn meta" data-attr="meta">META</button>
       </div>
       <div class="picker-grid" id="picker-grid"></div>
     </div>
   </div>
 
   <script src="resources/heroes.js"></script>
+  <script src="resources/meta.js"></script>
   <script>
     // ── Section A: Constants ──────────────────────────────────────────
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
@@ -543,6 +546,7 @@
     let heroes = [];
     let selectedHero = null;
     let pickerAttrFilter = 'all-heroes';
+    let pickerMetaFilter = false;
 
     let heroX = 0, heroY = 0;
     let facingAngle = -Math.PI / 2; // facing up
@@ -560,7 +564,8 @@
     function openPicker() {
       document.getElementById('picker-search').value = '';
       pickerAttrFilter = 'all-heroes';
-      document.querySelectorAll('.picker-filter-btn').forEach(b => b.classList.remove('active'));
+      pickerMetaFilter = false;
+      document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(b => b.classList.remove('active'));
       document.querySelector('.picker-filter-btn[data-attr="all-heroes"]').classList.add('active');
       renderPickerGrid();
       document.getElementById('picker-overlay').classList.add('open');
@@ -571,14 +576,25 @@
       document.getElementById('picker-overlay').classList.remove('open');
     }
 
+    function getMetaHeroNames() {
+      if (typeof META_ALL === 'undefined') return new Set();
+      const names = new Set();
+      for (const role of META_ALL) {
+        for (const name of role) names.add(name);
+      }
+      return names;
+    }
+
     function renderPickerGrid() {
       const search = document.getElementById('picker-search').value.toLowerCase();
       const grid = document.getElementById('picker-grid');
+      const metaNames = pickerMetaFilter ? getMetaHeroNames() : null;
 
       const filtered = heroes.filter(h => {
         const matchName = h.localized_name.toLowerCase().includes(search);
         const matchAttr = pickerAttrFilter === 'all-heroes' || h.primary_attr === pickerAttrFilter;
-        return matchName && matchAttr;
+        const matchMeta = !pickerMetaFilter || metaNames.has(h.localized_name);
+        return matchName && matchAttr && matchMeta;
       });
 
       grid.innerHTML = filtered.map(h => `
@@ -826,9 +842,14 @@
     document.getElementById('picker-search').addEventListener('input', renderPickerGrid);
     document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        pickerAttrFilter = btn.dataset.attr;
+        if (btn.dataset.attr === 'meta') {
+          pickerMetaFilter = !pickerMetaFilter;
+          btn.classList.toggle('active');
+        } else {
+          document.querySelectorAll('.picker-filter-btn[data-attr]:not([data-attr="meta"])').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          pickerAttrFilter = btn.dataset.attr;
+        }
         renderPickerGrid();
       });
     });
