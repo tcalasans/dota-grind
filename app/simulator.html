@@ -1031,7 +1031,10 @@
     });
 
     // Canvas click
-    document.getElementById('canvas').addEventListener('click', onCanvasClick);
+    document.getElementById('canvas').addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      onCanvasClick(e);
+    });
 
     // Window resize
     window.addEventListener('resize', () => {
