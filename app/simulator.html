@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulator - Dota 2</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      min-height: 100vh;
+      background: #0f1a2e;
+      border-right: 1px solid #0f3460;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 200;
+      transition: transform 0.3s;
+    }
+
+    .sidebar-brand {
+      padding: 20px 16px;
+      border-bottom: 2px solid #e94560;
+      text-align: center;
+    }
+
+    .sidebar-brand h2 {
+      font-size: 1.1rem;
+      color: #e94560;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-brand span {
+      font-size: 0.65rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .sidebar nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar nav a:hover {
+      color: #e0e0e0;
+      background: rgba(233, 69, 96, 0.05);
+    }
+
+    .sidebar nav a.active {
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.1);
+      border-left-color: #e94560;
+    }
+
+    .sidebar nav a .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 220px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 300;
+      background: #0f1a2e;
+      border: 1px solid #0f3460;
+      color: #e0e0e0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 199;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-toggle { display: block; }
+      .main-content { margin-left: 0; }
+    }
+
+    /* Pre-game screen */
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    #pregame-screen {
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .intro-card {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      border: 1px solid #0f3460;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .intro-card h2 {
+      font-size: 1.8rem;
+      color: #e94560;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .intro-card p {
+      color: #999;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .hero-preview {
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .hero-preview img {
+      width: 180px;
+      border-radius: 8px;
+      border: 2px solid #0f3460;
+      margin-bottom: 12px;
+    }
+
+    .hero-preview .hero-name {
+      font-size: 1.1rem;
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    .hero-preview .hero-stats-preview {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .hero-preview .placeholder-text {
+      color: #555;
+      font-size: 0.9rem;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-select {
+      background: #0f3460;
+      color: #e0e0e0;
+      border: 1px solid #1a4a7a;
+      margin-right: 12px;
+    }
+
+    .btn-select:hover { background: #1a4a7a; }
+
+    .btn-start {
+      background: #e94560;
+      color: #fff;
+    }
+
+    .btn-start:hover:not(:disabled) { background: #d63651; }
+
+    .btn-start:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .intro-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Game screen */
+    #game-screen {
+      flex: 1;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .hud {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      border-bottom: 2px solid #e94560;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      z-index: 10;
+    }
+
+    .hud-hero-name {
+      font-size: 1.1rem;
+      color: #e94560;
+      font-weight: 600;
+    }
+
+    .hud-stat {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .hud-stat span {
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    .hud-spacer { flex: 1; }
+
+    .btn-change {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .btn-change:hover { background: #0f3460; border-color: #e94560; }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-container canvas {
+      display: block;
+      cursor: crosshair;
+    }
+
+    /* Hero Picker Modal */
+    .picker-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 500;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .picker-overlay.open { display: flex; }
+
+    .picker-modal {
+      background: #16213e;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #0f3460;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .picker-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #0f3460;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .picker-header h3 {
+      font-size: 1.1rem;
+      color: #e94560;
+    }
+
+    .picker-close {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .picker-close:hover { color: #e94560; }
+
+    .picker-filters {
+      display: flex;
+      gap: 8px;
+      padding: 12px 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .picker-filters input {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      width: 200px;
+      outline: none;
+    }
+
+    .picker-filters input:focus { border-color: #e94560; }
+
+    .picker-filter-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid #0f3460;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .picker-filter-btn:hover { background: #0f3460; }
+    .picker-filter-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+    .picker-filter-btn.str.active { background: #c23616; border-color: #c23616; }
+    .picker-filter-btn.agi.active { background: #27ae60; border-color: #27ae60; }
+    .picker-filter-btn.int.active { background: #2980b9; border-color: #2980b9; }
+    .picker-filter-btn.all.active { background: #8e44ad; border-color: #8e44ad; }
+
+    .picker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 6px;
+      padding: 12px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .picker-card {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .picker-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(233, 69, 96, 0.3);
+      border-color: #e94560;
+    }
+
+    .picker-card img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+
+    .picker-card .picker-name {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 14px 4px 3px;
+      font-size: 0.6rem;
+      text-align: center;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .picker-card .attr-indicator {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .attr-indicator.str { background: #c23616; }
+    .attr-indicator.agi { background: #27ae60; }
+    .attr-indicator.int { background: #2980b9; }
+    .attr-indicator.all { background: #8e44ad; }
+
+    @media (max-width: 768px) {
+      .hud { flex-wrap: wrap; gap: 12px; padding: 10px 14px; }
+      .intro-card { padding: 24px; }
+      .intro-card h2 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>DOTA 2</h2>
+      <span>Analysis</span>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="nav-icon">&#9813;</span>
+        Hero Stats
+      </a>
+      <a href="compare.html">
+        <span class="nav-icon">&#9878;</span>
+        Hero Comparison
+      </a>
+      <a href="lane-matchup.html">
+        <span class="nav-icon">&#9876;</span>
+        Lane Matchup
+      </a>
+      <a href="click-trainer.html">
+        <span class="nav-icon">&#9678;</span>
+        Click Trainer
+      </a>
+      <a href="simulator.html" class="active">
+        <span class="nav-icon">&#9654;</span>
+        Simulator
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <!-- Pre-game screen -->
+    <div id="pregame-screen" class="screen active">
+      <div class="intro-card">
+        <h2>Movement Simulator</h2>
+        <p>Pick a hero and watch how it moves on the battlefield. Click the canvas to issue move commands — the hero turns using its turn rate, then walks at its move speed, just like in Dota 2.</p>
+        <div class="hero-preview" id="hero-preview">
+          <span class="placeholder-text">No hero selected</span>
+        </div>
+        <div class="intro-buttons">
+          <button class="btn btn-select" id="btn-select" onclick="openPicker()">Select a Hero</button>
+          <button class="btn btn-start" id="btn-start" disabled onclick="startSimulation()">Start Simulation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game screen -->
+    <div id="game-screen" class="screen">
+      <div class="hud">
+        <span class="hud-hero-name" id="hud-name"></span>
+        <span class="hud-stat">Move Speed: <span id="hud-ms"></span></span>
+        <span class="hud-stat">Turn Rate: <span id="hud-tr"></span></span>
+        <span class="hud-spacer"></span>
+        <button class="btn-change" onclick="changeHero()">Change Hero</button>
+      </div>
+      <div class="canvas-container" id="canvas-container">
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Picker Modal -->
+  <div class="picker-overlay" id="picker-overlay">
+    <div class="picker-modal">
+      <div class="picker-header">
+        <h3>Select Hero</h3>
+        <button class="picker-close" onclick="closePicker()">&times;</button>
+      </div>
+      <div class="picker-filters">
+        <input type="text" id="picker-search" placeholder="Search heroes...">
+        <button class="picker-filter-btn active" data-attr="all-heroes">All</button>
+        <button class="picker-filter-btn str" data-attr="str">STR</button>
+        <button class="picker-filter-btn agi" data-attr="agi">AGI</button>
+        <button class="picker-filter-btn int" data-attr="int">INT</button>
+        <button class="picker-filter-btn all" data-attr="all">UNI</button>
+      </div>
+      <div class="picker-grid" id="picker-grid"></div>
+    </div>
+  </div>
+
+  <script src="resources/heroes.js"></script>
+  <script>
+    // ── Section A: Constants ──────────────────────────────────────────
+    const CDN = 'https://cdn.cloudflare.steamstatic.com';
+    const DEFAULT_TURN_RATE = 0.6;
+    const TURN_THRESHOLD = 0.2007;  // 11.5° in radians
+    const ARRIVAL_THRESHOLD = 2;
+    const HERO_RADIUS = 20;
+
+    // ── Section B: State ──────────────────────────────────────────────
+    let heroes = [];
+    let selectedHero = null;
+    let pickerAttrFilter = 'all-heroes';
+
+    let heroX = 0, heroY = 0;
+    let facingAngle = -Math.PI / 2; // facing up
+    let targetX = null, targetY = null;
+    let moveSpeed = 300;
+    let turnRate = DEFAULT_TURN_RATE;
+    let animFrameId = null;
+    let lastTime = null;
+    let clickMarkers = [];
+
+    let canvas, ctx, canvasContainer;
+    let dpr = 1;
+
+    // ── Section C: Hero Picker ────────────────────────────────────────
+    function openPicker() {
+      document.getElementById('picker-search').value = '';
+      pickerAttrFilter = 'all-heroes';
+      document.querySelectorAll('.picker-filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.picker-filter-btn[data-attr="all-heroes"]').classList.add('active');
+      renderPickerGrid();
+      document.getElementById('picker-overlay').classList.add('open');
+      document.getElementById('picker-search').focus();
+    }
+
+    function closePicker() {
+      document.getElementById('picker-overlay').classList.remove('open');
+    }
+
+    function renderPickerGrid() {
+      const search = document.getElementById('picker-search').value.toLowerCase();
+      const grid = document.getElementById('picker-grid');
+
+      const filtered = heroes.filter(h => {
+        const matchName = h.localized_name.toLowerCase().includes(search);
+        const matchAttr = pickerAttrFilter === 'all-heroes' || h.primary_attr === pickerAttrFilter;
+        return matchName && matchAttr;
+      });
+
+      grid.innerHTML = filtered.map(h => `
+        <div class="picker-card" onclick="selectHero(${h.id})">
+          <img src="${CDN}${h.img}" alt="${h.localized_name}" loading="lazy">
+          <span class="attr-indicator ${h.primary_attr}"></span>
+          <div class="picker-name">${h.localized_name}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectHero(heroId) {
+      const hero = heroes.find(h => h.id === heroId);
+      if (!hero) return;
+      selectedHero = hero;
+
+      const tr = hero.turn_rate != null ? hero.turn_rate : DEFAULT_TURN_RATE;
+      const preview = document.getElementById('hero-preview');
+      preview.innerHTML = `
+        <img src="${CDN}${hero.img}" alt="${hero.localized_name}">
+        <span class="hero-name">${hero.localized_name}</span>
+        <span class="hero-stats-preview">Move Speed: ${hero.move_speed} &nbsp;|&nbsp; Turn Rate: ${tr}</span>
+      `;
+
+      document.getElementById('btn-start').disabled = false;
+      closePicker();
+    }
+
+    // ── Section D: Screen Management ──────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function startSimulation() {
+      if (!selectedHero) return;
+
+      moveSpeed = selectedHero.move_speed;
+      turnRate = selectedHero.turn_rate != null ? selectedHero.turn_rate : DEFAULT_TURN_RATE;
+
+      document.getElementById('hud-name').textContent = selectedHero.localized_name;
+      document.getElementById('hud-ms').textContent = moveSpeed;
+      document.getElementById('hud-tr').textContent = turnRate;
+
+      showScreen('game-screen');
+      initCanvas();
+
+      heroX = canvas.width / dpr / 2;
+      heroY = canvas.height / dpr / 2;
+      facingAngle = -Math.PI / 2;
+      targetX = null;
+      targetY = null;
+      clickMarkers = [];
+      lastTime = null;
+
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function changeHero() {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      showScreen('pregame-screen');
+    }
+
+    // ── Section E: Canvas Init + Resize ───────────────────────────────
+    function initCanvas() {
+      canvasContainer = document.getElementById('canvas-container');
+      canvas = document.getElementById('canvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+    }
+
+    function resizeCanvas() {
+      if (!canvasContainer || !canvas) return;
+      dpr = window.devicePixelRatio || 1;
+      const w = canvasContainer.clientWidth;
+      const h = canvasContainer.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    // ── Section F: HUD rendering (handled via DOM) ────────────────────
+
+    // ── Section G: Click Handler ──────────────────────────────────────
+    function onCanvasClick(e) {
+      const rect = canvas.getBoundingClientRect();
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+      clickMarkers.push({ x: targetX, y: targetY, time: performance.now() });
+    }
+
+    // ── Section H: Game Loop ──────────────────────────────────────────
+    function gameLoop(timestamp) {
+      if (lastTime === null) lastTime = timestamp;
+      let dt = (timestamp - lastTime) / 1000;
+      if (dt > 0.1) dt = 0.1; // clamp
+      lastTime = timestamp;
+
+      update(dt);
+      render(timestamp);
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // ── Section I: Update Logic ───────────────────────────────────────
+    function update(dt) {
+      if (targetX === null || targetY === null) return;
+
+      const dx = targetX - heroX;
+      const dy = targetY - heroY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < ARRIVAL_THRESHOLD) {
+        heroX = targetX;
+        heroY = targetY;
+        targetX = null;
+        targetY = null;
+        return;
+      }
+
+      // Desired angle to target
+      const desiredAngle = Math.atan2(dy, dx);
+
+      // Normalize angle difference to [-π, π]
+      let angleDiff = desiredAngle - facingAngle;
+      while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+      while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+      // Turn toward target
+      const angularVelocity = turnRate / 0.03; // rad/s
+      const maxTurn = angularVelocity * dt;
+
+      if (Math.abs(angleDiff) <= maxTurn) {
+        facingAngle = desiredAngle;
+      } else {
+        facingAngle += Math.sign(angleDiff) * maxTurn;
+      }
+
+      // Normalize facing angle
+      while (facingAngle > Math.PI) facingAngle -= 2 * Math.PI;
+      while (facingAngle < -Math.PI) facingAngle += 2 * Math.PI;
+
+      // Move if facing within threshold
+      if (Math.abs(angleDiff) <= TURN_THRESHOLD) {
+        const step = moveSpeed * dt;
+        const moveD = Math.min(step, dist);
+        heroX += Math.cos(facingAngle) * moveD;
+        heroY += Math.sin(facingAngle) * moveD;
+      }
+    }
+
+    // ── Section J: Render Logic ───────────────────────────────────────
+    function render(timestamp) {
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+
+      // Clear
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, w, h);
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Click markers (fade out over 800ms)
+      const now = timestamp;
+      clickMarkers = clickMarkers.filter(m => now - m.time < 800);
+      for (const m of clickMarkers) {
+        const alpha = 1 - (now - m.time) / 800;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#e94560';
+        ctx.lineWidth = 2;
+        const s = 8;
+        ctx.beginPath();
+        ctx.moveTo(m.x - s, m.y - s);
+        ctx.lineTo(m.x + s, m.y + s);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(m.x + s, m.y - s);
+        ctx.lineTo(m.x - s, m.y + s);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Path line to target
+      if (targetX !== null && targetY !== null) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(233,69,96,0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(heroX, heroY);
+        ctx.lineTo(targetX, targetY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Hero circle
+      ctx.beginPath();
+      ctx.arc(heroX, heroY, HERO_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = '#3498db';
+      ctx.fill();
+      ctx.strokeStyle = '#2980b9';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Facing indicator (small triangle protruding from circle edge)
+      ctx.save();
+      ctx.translate(heroX, heroY);
+      ctx.rotate(facingAngle);
+      ctx.beginPath();
+      ctx.moveTo(HERO_RADIUS + 8, 0);
+      ctx.lineTo(HERO_RADIUS - 2, -5);
+      ctx.lineTo(HERO_RADIUS - 2, 5);
+      ctx.closePath();
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Section K: Event Listeners + Init ─────────────────────────────
+    function loadHeroes() {
+      heroes = typeof HEROES !== 'undefined' ? HEROES : [];
+    }
+
+    // Picker filters
+    document.getElementById('picker-search').addEventListener('input', renderPickerGrid);
+    document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.picker-filter-btn[data-attr]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pickerAttrFilter = btn.dataset.attr;
+        renderPickerGrid();
+      });
+    });
+
+    // Picker close
+    document.getElementById('picker-overlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closePicker();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePicker();
+    });
+
+    // Canvas click
+    document.getElementById('canvas').addEventListener('click', onCanvasClick);
+
+    // Window resize
+    window.addEventListener('resize', () => {
+      if (document.getElementById('game-screen').classList.contains('active')) {
+        resizeCanvas();
+      }
+    });
+
+    // Sidebar toggle
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    });
+    document.getElementById('sidebar-overlay').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    });
+
+    // Init
+    loadHeroes();
+  </script>
+</body>
+</html>
