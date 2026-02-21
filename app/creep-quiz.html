@@ -261,48 +261,45 @@
     .question-text .team-radiant { color: #27ae60; font-weight: 700; }
     .question-text .team-dire { color: #e74c3c; font-weight: 700; }
     .question-text .lane-name { color: #e94560; font-weight: 700; }
-    .question-text .game-time { color: #f1c40f; font-weight: 700; }
+    .question-text .point-num { color: #f1c40f; font-weight: 700; }
 
-    .canvas-wrap {
-      position: relative;
+    .map-img-wrap {
       width: 100%;
       max-width: 500px;
-      aspect-ratio: 1;
     }
 
-    .canvas-wrap canvas {
+    .map-img-wrap img {
       width: 100%;
-      height: 100%;
+      height: auto;
       display: block;
       border-radius: 8px;
       border: 2px solid #0f3460;
-      cursor: pointer;
     }
 
-    .segment-buttons {
+    .answer-buttons {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
       justify-content: center;
     }
 
-    .seg-btn {
-      padding: 10px 20px;
+    .answer-btn {
+      padding: 12px 24px;
       background: #1a1a2e;
       border: 2px solid #0f3460;
       border-radius: 8px;
       color: #e0e0e0;
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
-      min-width: 60px;
+      min-width: 80px;
       text-align: center;
     }
 
-    .seg-btn:hover { border-color: #e94560; background: rgba(233, 69, 96, 0.1); }
+    .answer-btn:hover { border-color: #e94560; background: rgba(233, 69, 96, 0.1); }
 
-    .seg-btn .key-hint {
+    .answer-btn .key-hint {
       display: inline-block;
       width: 20px;
       height: 20px;
@@ -314,27 +311,27 @@
       font-weight: 700;
       color: #888;
       text-align: center;
-      margin-right: 6px;
+      margin-right: 8px;
       vertical-align: middle;
     }
 
-    .seg-btn.correct {
+    .answer-btn.correct {
       background: rgba(39, 174, 96, 0.25);
       border-color: #27ae60;
       color: #2ecc71;
     }
 
-    .seg-btn.wrong {
+    .answer-btn.wrong {
       background: rgba(231, 76, 60, 0.25);
       border-color: #e74c3c;
       color: #e74c3c;
     }
 
-    .seg-btn.dimmed {
+    .answer-btn.dimmed {
       opacity: 0.4;
     }
 
-    .seg-btn.dimmed.correct { opacity: 1; }
+    .answer-btn.dimmed.correct { opacity: 1; }
 
     .feedback-text {
       font-size: 0.9rem;
@@ -408,7 +405,7 @@
     /* Responsive */
     @media (max-width: 768px) {
       .game-hud { gap: 16px; }
-      .canvas-wrap { max-width: 360px; }
+      .map-img-wrap { max-width: 360px; }
       .question-text { font-size: 0.95rem; }
     }
   </style>
@@ -458,8 +455,8 @@
     <!-- Pre-game -->
     <div id="pregame-screen" class="screen active">
       <div class="intro-card">
-        <h2>Creep Wave Position</h2>
-        <p>Test your map awareness! Given a game time, identify where an uncontested creep wave is along a lane on the minimap.</p>
+        <h2>Creep Wave Timers</h2>
+        <p>Test your knowledge of creep wave timing! Given a team, lane, and game clock time, identify which checkpoint the creep wave is at on the minimap.</p>
         <div class="intro-rules">
           <div>
             <span class="rule-icon">&#9881;</span>
@@ -467,15 +464,15 @@
           </div>
           <div>
             <span class="rule-icon">&#9733;</span>
-            <span>Pick the correct lane segment (1-5) where the creep wave is</span>
+            <span>Each lane has 3 checkpoints: Tower 2, Tower 1, Wave Meet</span>
           </div>
           <div>
             <span class="rule-icon">&#9678;</span>
-            <span>Click buttons, press 1-5, or click directly on the map</span>
+            <span>Pick the correct point — click a button or press 1-3</span>
           </div>
           <div>
             <span class="rule-icon">&#9876;</span>
-            <span>Learn creep timing to improve your map awareness</span>
+            <span>Learn wave timings to improve your map awareness</span>
           </div>
         </div>
         <button class="btn-start" id="btn-start">Start Quiz</button>
@@ -497,10 +494,10 @@
 
       <div class="game-area">
         <div class="question-text" id="question-text"></div>
-        <div class="canvas-wrap">
-          <canvas id="minimap"></canvas>
+        <div class="map-img-wrap">
+          <img id="map-img" src="" alt="Minimap">
         </div>
-        <div class="segment-buttons" id="segment-buttons"></div>
+        <div class="answer-buttons" id="answer-buttons"></div>
         <div class="feedback-text" id="feedback-text"></div>
       </div>
     </div>
@@ -518,76 +515,24 @@
     </div>
   </div>
 
+  <script src="resources/creep_wave_timers.js"></script>
   <script>
     // ── Constants ──────────────────────────────────────────────────────
-    const CREEP_SPEED = 325;
-    const SPAWN_INTERVAL = 30;
-    const MAP_SIZE = 16384;
     const TOTAL_ROUNDS = 10;
     const FEEDBACK_DELAY = 1500;
 
-    // Segment colors
-    const SEG_COLORS = [
-      '#e94560', // red
-      '#f39c12', // orange
-      '#2ecc71', // green
-      '#3498db', // blue
-      '#9b59b6', // purple
-    ];
-
-    // Actual Dota 2 lane distances (game units, one direction base-to-base)
-    // Side lanes: midway at ~30s => total ≈ 325 * 30 * 2 = 19500
-    // Mid lane: midway at ~16s => total ≈ 325 * 16 * 2 = 10400
-    const LANE_DISTANCE = {
-      top: 19500,
-      mid: 10400,
-      bot: 19500,
-    };
-
-    // Lane paths as normalized [x, y] coordinates (0-1 range) — visual only
-    // Radiant perspective: creeps go from Radiant base toward Dire base
-    const LANE_PATHS = {
-      top: [
-        [0.10, 0.80], // Radiant base area
-        [0.10, 0.50],
-        [0.10, 0.25],
-        [0.15, 0.15],
-        [0.35, 0.12],
-        [0.55, 0.10],
-        [0.75, 0.10],
-        [0.88, 0.12], // Dire base area
-      ],
-      mid: [
-        [0.18, 0.82], // Radiant base area
-        [0.30, 0.70],
-        [0.42, 0.58],
-        [0.50, 0.50],
-        [0.58, 0.42],
-        [0.70, 0.30],
-        [0.82, 0.18], // Dire base area
-      ],
-      bot: [
-        [0.12, 0.88], // Radiant base area
-        [0.25, 0.90],
-        [0.45, 0.90],
-        [0.65, 0.88],
-        [0.85, 0.85],
-        [0.90, 0.70],
-        [0.90, 0.50],
-        [0.90, 0.25], // Dire base area
-      ],
-    };
+    const TEAMS = ['radiant', 'dire'];
+    const LANES = ['safelane', 'midlane', 'offlane'];
+    const POINTS = ['1', '2', '3'];
+    const POINT_LABELS = { '1': 'Tower 1', '2': 'Tower 2', '3': 'Wave Meet' };
 
     // ── State ──────────────────────────────────────────────────────────
     let round = 0;
     let score = 0;
     let answered = false;
-    let currentScenario = null;
+    let currentQuestion = null;
     let feedbackTimeout = null;
-
-    // Canvas
-    let canvas, ctx;
-    let canvasSize = 500;
+    let usedCombos = [];
 
     // ── DOM ────────────────────────────────────────────────────────────
     const $pregame = document.getElementById('pregame-screen');
@@ -596,7 +541,8 @@
     const $hudRound = document.getElementById('hud-round');
     const $hudScore = document.getElementById('hud-score');
     const $questionText = document.getElementById('question-text');
-    const $segButtons = document.getElementById('segment-buttons');
+    const $mapImg = document.getElementById('map-img');
+    const $answerButtons = document.getElementById('answer-buttons');
     const $feedback = document.getElementById('feedback-text');
 
     // ── Screen management ─────────────────────────────────────────────
@@ -607,345 +553,68 @@
       screen.classList.add('active');
     }
 
-    // ── Path utilities ────────────────────────────────────────────────
-    function getPath(lane, team) {
-      const radiantPath = LANE_PATHS[lane];
-      if (team === 'radiant') return radiantPath;
-      // Dire: reversed path (creeps go from Dire base to Radiant base)
-      return [...radiantPath].reverse();
+    // ── Helpers ───────────────────────────────────────────────────────
+    function getMapImageSrc(team, lane) {
+      return `resources/minimap/minimap-${team}-${lane}.png`;
     }
 
-    // Visual path segment lengths (normalized coords, unitless)
-    function visualSegmentLengths(path) {
-      const lengths = [];
-      for (let i = 1; i < path.length; i++) {
-        const dx = path[i][0] - path[i - 1][0];
-        const dy = path[i][1] - path[i - 1][1];
-        lengths.push(Math.sqrt(dx * dx + dy * dy));
-      }
-      return lengths;
+    function formatTime(totalSeconds) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return m + ':' + String(s).padStart(2, '0');
     }
 
-    function totalVisualLength(path) {
-      return visualSegmentLengths(path).reduce((a, b) => a + b, 0);
-    }
-
-    // Interpolate along the visual path at a given visual distance
-    function interpolateVisual(path, visualDist) {
-      const segLengths = visualSegmentLengths(path);
-      let remaining = visualDist;
-
-      for (let i = 0; i < segLengths.length; i++) {
-        if (remaining <= segLengths[i]) {
-          const t = remaining / segLengths[i];
-          return [
-            path[i][0] + (path[i + 1][0] - path[i][0]) * t,
-            path[i][1] + (path[i + 1][1] - path[i][1]) * t,
-          ];
-        }
-        remaining -= segLengths[i];
-      }
-      return path[path.length - 1];
-    }
-
-    // Convert game-unit distance to visual distance along a lane's path
-    function gameDistToVisualDist(lane, gameDist) {
-      const realTotal = LANE_DISTANCE[lane];
-      const path = LANE_PATHS[lane]; // always use base path for length ratio
-      const visTotal = totalVisualLength(path);
-      return (gameDist / realTotal) * visTotal;
-    }
-
-    function getCreepPosition(lane, path, gameTime) {
-      const waveNumber = Math.floor(gameTime / SPAWN_INTERVAL);
-      const spawnTime = waveNumber * SPAWN_INTERVAL;
-      const gameDist = (gameTime - spawnTime) * CREEP_SPEED;
-      const visDist = gameDistToVisualDist(lane, gameDist);
-      return interpolateVisual(path, visDist);
-    }
-
-    // Divide path into 5 equal visual-length segments, return info
-    // Segments are divided visually; game-unit boundaries are computed via lane distance
-    function getSegments(lane, path) {
-      const visLengths = visualSegmentLengths(path);
-      const visTotal = visLengths.reduce((a, b) => a + b, 0);
-      const visSeg = visTotal / 5;
-      const realTotal = LANE_DISTANCE[lane];
-      const segments = [];
-
-      for (let s = 0; s < 5; s++) {
-        const visStart = s * visSeg;
-        const visEnd = (s + 1) * visSeg;
-        const visMid = (visStart + visEnd) / 2;
-
-        // Corresponding game-unit boundaries
-        const gameStart = (visStart / visTotal) * realTotal;
-        const gameEnd = (visEnd / visTotal) * realTotal;
-
-        const midPos = interpolateVisual(path, visMid);
-
-        // Build polyline points along this visual segment
-        const startPos = interpolateVisual(path, visStart);
-        const points = [startPos];
-        let cumDist = 0;
-        for (let i = 0; i < visLengths.length; i++) {
-          const segStart = cumDist;
-          const segEnd = cumDist + visLengths[i];
-
-          if (segEnd > visStart && segStart < visEnd) {
-            if (segEnd <= visEnd) {
-              points.push(path[i + 1]);
-            } else {
-              points.push(interpolateVisual(path, visEnd));
-            }
+    // ── Question generation ───────────────────────────────────────────
+    function generateQuestion() {
+      // Build available (team, lane) combos not yet used
+      let available = [];
+      for (const team of TEAMS) {
+        for (const lane of LANES) {
+          const key = `${team}-${lane}`;
+          if (!usedCombos.includes(key)) {
+            available.push({ team, lane, key });
           }
-          cumDist += visLengths[i];
-        }
-
-        segments.push({
-          index: s,
-          gameStart,
-          gameEnd,
-          midPos,
-          points,
-          color: SEG_COLORS[s],
-        });
-      }
-
-      return segments;
-    }
-
-    function getCorrectSegment(segments, gameTime) {
-      const waveNumber = Math.floor(gameTime / SPAWN_INTERVAL);
-      const spawnTime = waveNumber * SPAWN_INTERVAL;
-      const gameDist = (gameTime - spawnTime) * CREEP_SPEED;
-
-      for (let i = 0; i < segments.length; i++) {
-        if (gameDist >= segments[i].gameStart && gameDist <= segments[i].gameEnd) {
-          return i;
         }
       }
-      // Past path end — last segment
-      return 4;
-    }
-
-    // ── Scenario generation ───────────────────────────────────────────
-    function generateScenario() {
-      const lanes = ['top', 'mid', 'bot'];
-      const teams = ['radiant', 'dire'];
-      const lane = lanes[Math.floor(Math.random() * lanes.length)];
-      const team = teams[Math.floor(Math.random() * teams.length)];
-
-      // Wave 0-19, offset 3-27s
-      const wave = Math.floor(Math.random() * 20);
-      const offset = 3 + Math.floor(Math.random() * 25);
-      const gameTime = wave * SPAWN_INTERVAL + offset;
-
-      const path = getPath(lane, team);
-      const segments = getSegments(lane, path);
-      const correctSegment = getCorrectSegment(segments, gameTime);
-      const creepPos = getCreepPosition(lane, path, gameTime);
-
-      return { lane, team, gameTime, path, segments, correctSegment, creepPos };
-    }
-
-    // ── Canvas rendering ──────────────────────────────────────────────
-    function initCanvas() {
-      canvas = document.getElementById('minimap');
-      ctx = canvas.getContext('2d');
-      resizeCanvas();
-    }
-
-    function resizeCanvas() {
-      const wrap = canvas.parentElement;
-      const size = wrap.clientWidth;
-      canvasSize = size;
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = size * dpr;
-      canvas.height = size * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function toCanvas(nx, ny) {
-      return [nx * canvasSize, ny * canvasSize];
-    }
-
-    function drawMinimap(scenario, showAnswer) {
-      const s = canvasSize;
-      ctx.clearRect(0, 0, s, s);
-
-      // Background
-      ctx.fillStyle = '#0d1117';
-      ctx.fillRect(0, 0, s, s);
-
-      // Grid
-      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 10; i++) {
-        const pos = (i / 10) * s;
-        ctx.beginPath(); ctx.moveTo(pos, 0); ctx.lineTo(pos, s); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(0, pos); ctx.lineTo(s, pos); ctx.stroke();
-      }
-
-      // River — curved line from top-right to bottom-left
-      ctx.beginPath();
-      ctx.moveTo(s * 0.95, s * 0.05);
-      ctx.bezierCurveTo(s * 0.65, s * 0.35, s * 0.35, s * 0.65, s * 0.05, s * 0.95);
-      ctx.strokeStyle = 'rgba(52, 152, 219, 0.25)';
-      ctx.lineWidth = s * 0.04;
-      ctx.stroke();
-
-      // Radiant base (bottom-left)
-      ctx.beginPath();
-      ctx.arc(s * 0.10, s * 0.90, s * 0.06, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(39, 174, 96, 0.3)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(39, 174, 96, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Dire base (top-right)
-      ctx.beginPath();
-      ctx.arc(s * 0.90, s * 0.10, s * 0.06, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(231, 76, 60, 0.3)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Draw all lanes dimly
-      const allLanes = ['top', 'mid', 'bot'];
-      for (const lane of allLanes) {
-        if (scenario && lane === scenario.lane) continue; // draw target lane separately
-        const path = LANE_PATHS[lane];
-        ctx.beginPath();
-        const [sx, sy] = toCanvas(path[0][0], path[0][1]);
-        ctx.moveTo(sx, sy);
-        for (let i = 1; i < path.length; i++) {
-          const [px, py] = toCanvas(path[i][0], path[i][1]);
-          ctx.lineTo(px, py);
-        }
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
-
-      if (!scenario) return;
-
-      // Draw target lane segments with colors
-      const { segments, correctSegment, creepPos } = scenario;
-
-      for (let i = 0; i < segments.length; i++) {
-        const seg = segments[i];
-        const pts = seg.points;
-        if (pts.length < 2) continue;
-
-        let alpha = showAnswer ? (i === correctSegment ? 1 : 0.25) : 0.8;
-
-        ctx.beginPath();
-        const [sx, sy] = toCanvas(pts[0][0], pts[0][1]);
-        ctx.moveTo(sx, sy);
-        for (let j = 1; j < pts.length; j++) {
-          const [px, py] = toCanvas(pts[j][0], pts[j][1]);
-          ctx.lineTo(px, py);
-        }
-        ctx.strokeStyle = seg.color;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = 6;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-
-        // Numbered circle at midpoint
-        const [mx, my] = toCanvas(seg.midPos[0], seg.midPos[1]);
-        const circleAlpha = showAnswer ? (i === correctSegment ? 1 : 0.3) : 1;
-
-        ctx.globalAlpha = circleAlpha;
-        ctx.beginPath();
-        ctx.arc(mx, my, 14, 0, Math.PI * 2);
-        ctx.fillStyle = seg.color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(i + 1), mx, my);
-        ctx.globalAlpha = 1;
-      }
-
-      // Show creep marker if answer revealed
-      if (showAnswer) {
-        const [cx, cy] = toCanvas(creepPos[0], creepPos[1]);
-
-        // Glow
-        ctx.beginPath();
-        ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(241, 196, 15, 0.3)';
-        ctx.fill();
-
-        // Dot
-        ctx.beginPath();
-        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#f1c40f';
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    }
-
-    // ── Canvas click hit-test ─────────────────────────────────────────
-    function distToSegmentLine(px, py, points) {
-      let minDist = Infinity;
-      for (let i = 0; i < points.length - 1; i++) {
-        const [ax, ay] = toCanvas(points[i][0], points[i][1]);
-        const [bx, by] = toCanvas(points[i + 1][0], points[i + 1][1]);
-        const d = pointToSegmentDist(px, py, ax, ay, bx, by);
-        if (d < minDist) minDist = d;
-      }
-      return minDist;
-    }
-
-    function pointToSegmentDist(px, py, ax, ay, bx, by) {
-      const dx = bx - ax;
-      const dy = by - ay;
-      const lenSq = dx * dx + dy * dy;
-      if (lenSq === 0) return Math.sqrt((px - ax) ** 2 + (py - ay) ** 2);
-      let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
-      t = Math.max(0, Math.min(1, t));
-      const projX = ax + t * dx;
-      const projY = ay + t * dy;
-      return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
-    }
-
-    function hitTestSegment(canvasX, canvasY) {
-      if (!currentScenario) return -1;
-      const threshold = 25;
-      let bestIdx = -1;
-      let bestDist = Infinity;
-
-      for (let i = 0; i < currentScenario.segments.length; i++) {
-        const seg = currentScenario.segments[i];
-        const d = distToSegmentLine(canvasX, canvasY, seg.points);
-        if (d < threshold && d < bestDist) {
-          bestDist = d;
-          bestIdx = i;
+      // Reset if all 6 combos used
+      if (available.length === 0) {
+        usedCombos = [];
+        for (const team of TEAMS) {
+          for (const lane of LANES) {
+            available.push({ team, lane, key: `${team}-${lane}` });
+          }
         }
       }
-      return bestIdx;
+
+      const pick = available[Math.floor(Math.random() * available.length)];
+      usedCombos.push(pick.key);
+
+      // Pick a random checkpoint as the correct answer
+      const correctPoint = POINTS[Math.floor(Math.random() * POINTS.length)];
+      const data = pick.team === 'radiant' ? RADIANT : DIRE;
+      const delta = data[pick.lane][correctPoint];
+
+      // Build game time: pick random wave spawn (n * 30) + delta, total < 40 min
+      const maxGameTime = 40 * 60;
+      const maxN = Math.floor((maxGameTime - 1 - delta) / 30);
+      const n = Math.floor(Math.random() * (maxN + 1));
+      const gameTime = n * 30 + delta;
+
+      return {
+        team: pick.team,
+        lane: pick.lane,
+        correctPoint,
+        gameTime,
+      };
     }
 
     // ── Game logic ────────────────────────────────────────────────────
     function startGame() {
       round = 0;
       score = 0;
+      usedCombos = [];
       $hudScore.textContent = '0';
       showScreen($game);
-      initCanvas();
       nextRound();
     }
 
@@ -961,37 +630,36 @@
       $feedback.textContent = '';
       $feedback.className = 'feedback-text';
 
-      currentScenario = generateScenario();
-      const { lane, team, gameTime } = currentScenario;
+      currentQuestion = generateQuestion();
+      const { team, lane, gameTime } = currentQuestion;
 
-      const minutes = Math.floor(gameTime / 60);
-      const seconds = gameTime % 60;
-      const timeStr = minutes + ':' + String(seconds).padStart(2, '0');
+      const teamLabel = team.charAt(0).toUpperCase() + team.slice(1);
       const laneLabel = lane.charAt(0).toUpperCase() + lane.slice(1);
 
       $questionText.innerHTML =
-        `Where is the <span class="team-${team}">${team.charAt(0).toUpperCase() + team.slice(1)}</span> ` +
-        `<span class="lane-name">${laneLabel}</span> lane creep wave at ` +
-        `<span class="game-time">${timeStr}</span>?`;
+        `<span class="team-${team}">${teamLabel}</span> ` +
+        `<span class="lane-name">${laneLabel}</span> — ` +
+        `At which point is the creep wave at <span class="point-num">${formatTime(gameTime)}</span>?`;
 
-      // Render segment buttons
-      $segButtons.innerHTML = currentScenario.segments.map((seg, i) =>
-        `<button class="seg-btn" data-seg="${i}" style="border-color: ${seg.color}">` +
-        `<span class="key-hint">${i + 1}</span>${i + 1}</button>`
+      $mapImg.src = getMapImageSrc(team, lane);
+
+      // Render answer buttons: Tower 1, Tower 2, Wave Meet
+      const BUTTON_ORDER = ['1', '2', '3'];
+      $answerButtons.innerHTML = BUTTON_ORDER.map((pt, i) =>
+        `<button class="answer-btn" data-point="${pt}">` +
+        `<span class="key-hint">${i + 1}</span>${POINT_LABELS[pt]}</button>`
       ).join('');
 
-      $segButtons.querySelectorAll('.seg-btn').forEach(btn => {
-        btn.addEventListener('click', () => handleAnswer(parseInt(btn.dataset.seg)));
+      $answerButtons.querySelectorAll('.answer-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleAnswer(btn.dataset.point));
       });
-
-      drawMinimap(currentScenario, false);
     }
 
-    function handleAnswer(segIndex) {
-      if (answered || !currentScenario) return;
+    function handleAnswer(selectedPoint) {
+      if (answered || !currentQuestion) return;
       answered = true;
 
-      const correct = segIndex === currentScenario.correctSegment;
+      const correct = selectedPoint === currentQuestion.correctPoint;
 
       if (correct) {
         score++;
@@ -999,26 +667,22 @@
         $feedback.textContent = 'Correct!';
         $feedback.className = 'feedback-text correct';
       } else {
-        $feedback.textContent = `Wrong! Segment ${currentScenario.correctSegment + 1} was correct.`;
+        $feedback.textContent = `Wrong! The answer is ${POINT_LABELS[currentQuestion.correctPoint]}.`;
         $feedback.className = 'feedback-text wrong';
       }
 
       // Update button styles
-      $segButtons.querySelectorAll('.seg-btn').forEach(btn => {
-        const idx = parseInt(btn.dataset.seg);
+      $answerButtons.querySelectorAll('.answer-btn').forEach(btn => {
+        const pt = btn.dataset.point;
         btn.classList.add('dimmed');
-        if (idx === currentScenario.correctSegment) {
+        if (pt === currentQuestion.correctPoint) {
           btn.classList.add('correct');
         }
-        if (idx === segIndex && !correct) {
+        if (pt === selectedPoint && !correct) {
           btn.classList.add('wrong');
         }
       });
 
-      // Show answer on map
-      drawMinimap(currentScenario, true);
-
-      // Advance after delay
       feedbackTimeout = setTimeout(() => nextRound(), FEEDBACK_DELAY);
     }
 
@@ -1026,8 +690,8 @@
       const pct = Math.round((score / TOTAL_ROUNDS) * 100);
 
       let grade, comment;
-      if (pct >= 90) { grade = 'S'; comment = 'Immortal-tier map awareness!'; }
-      else if (pct >= 80) { grade = 'A'; comment = 'Divine — you know your creep timings'; }
+      if (pct >= 90) { grade = 'S'; comment = 'Immortal-tier creep knowledge!'; }
+      else if (pct >= 80) { grade = 'A'; comment = 'Divine — you know your wave timings'; }
       else if (pct >= 70) { grade = 'B'; comment = 'Ancient — solid understanding'; }
       else if (pct >= 60) { grade = 'C'; comment = 'Legend — keep practicing'; }
       else if (pct >= 50) { grade = 'D'; comment = 'Archon — room to improve'; }
@@ -1046,30 +710,14 @@
       showScreen($pregame);
     });
 
-    // Keyboard shortcuts 1-5
+    // Keyboard shortcuts 1-3
     document.addEventListener('keydown', (e) => {
       if (!$game.classList.contains('active') || answered) return;
       const idx = parseInt(e.key) - 1;
-      if (idx >= 0 && idx < 5) handleAnswer(idx);
-    });
-
-    // Canvas click
-    document.getElementById('minimap').addEventListener('click', (e) => {
-      if (!$game.classList.contains('active') || answered) return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvasSize / rect.width;
-      const scaleY = canvasSize / rect.height;
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
-      const segIdx = hitTestSegment(x, y);
-      if (segIdx >= 0) handleAnswer(segIdx);
-    });
-
-    // Resize
-    window.addEventListener('resize', () => {
-      if ($game.classList.contains('active') && canvas) {
-        resizeCanvas();
-        if (currentScenario) drawMinimap(currentScenario, answered);
+      if (idx < 0 || idx > 2 || isNaN(idx)) return;
+      const btns = $answerButtons.querySelectorAll('.answer-btn');
+      if (idx < btns.length) {
+        handleAnswer(btns[idx].dataset.point);
       }
     });
 
