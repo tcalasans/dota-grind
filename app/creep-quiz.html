@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creep Quiz - Dota 2</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      min-height: 100vh;
+      background: #0f1a2e;
+      border-right: 1px solid #0f3460;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 200;
+      transition: transform 0.3s;
+    }
+
+    .sidebar-brand {
+      padding: 20px 16px;
+      border-bottom: 2px solid #e94560;
+      text-align: center;
+    }
+
+    .sidebar-brand h2 {
+      font-size: 1.1rem;
+      color: #e94560;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-brand span {
+      font-size: 0.65rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .sidebar nav {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #888;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar nav a:hover {
+      color: #e0e0e0;
+      background: rgba(233, 69, 96, 0.05);
+    }
+
+    .sidebar nav a.active {
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.1);
+      border-left-color: #e94560;
+    }
+
+    .sidebar nav a .nav-icon {
+      width: 20px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 220px;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 300;
+      background: #0f1a2e;
+      border: 1px solid #0f3460;
+      color: #e0e0e0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 199;
+    }
+    .sidebar-overlay.open { display: block; }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-toggle { display: block; }
+      .main-content { margin-left: 0; }
+    }
+
+    header {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 2px solid #e94560;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #e94560;
+      letter-spacing: 2px;
+    }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    #pregame-screen.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 72px);
+      padding: 20px;
+    }
+
+    .intro-card {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .intro-card h2 {
+      font-size: 1.5rem;
+      color: #e94560;
+      margin-bottom: 16px;
+    }
+
+    .intro-card p {
+      color: #aaa;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .intro-rules {
+      text-align: left;
+      margin: 20px 0;
+      padding: 16px;
+      background: #1a1a2e;
+      border-radius: 8px;
+    }
+
+    .intro-rules div {
+      display: flex;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 0.85rem;
+      color: #ccc;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .intro-rules div:last-child { border-bottom: none; }
+
+    .intro-rules .rule-icon {
+      color: #e94560;
+      font-size: 1rem;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .btn-start {
+      background: #e94560;
+      color: #fff;
+      border: none;
+      padding: 14px 48px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-start:hover { background: #d63651; }
+
+    /* Game HUD */
+    .game-hud {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      padding: 12px 20px;
+      background: #16213e;
+      border-bottom: 1px solid #0f3460;
+      flex-wrap: wrap;
+    }
+
+    .hud-item {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 2px;
+    }
+
+    .hud-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #e0e0e0;
+    }
+
+    .hud-value.accent { color: #e94560; }
+
+    /* Game area */
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      text-align: center;
+      color: #e0e0e0;
+      min-height: 28px;
+    }
+
+    .question-text .team-radiant { color: #27ae60; font-weight: 700; }
+    .question-text .team-dire { color: #e74c3c; font-weight: 700; }
+    .question-text .lane-name { color: #e94560; font-weight: 700; }
+    .question-text .game-time { color: #f1c40f; font-weight: 700; }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 1;
+    }
+
+    .canvas-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 8px;
+      border: 2px solid #0f3460;
+      cursor: pointer;
+    }
+
+    .segment-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .seg-btn {
+      padding: 10px 20px;
+      background: #1a1a2e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .seg-btn:hover { border-color: #e94560; background: rgba(233, 69, 96, 0.1); }
+
+    .seg-btn .key-hint {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #0f3460;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #888;
+      text-align: center;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .seg-btn.correct {
+      background: rgba(39, 174, 96, 0.25);
+      border-color: #27ae60;
+      color: #2ecc71;
+    }
+
+    .seg-btn.wrong {
+      background: rgba(231, 76, 60, 0.25);
+      border-color: #e74c3c;
+      color: #e74c3c;
+    }
+
+    .seg-btn.dimmed {
+      opacity: 0.4;
+    }
+
+    .seg-btn.dimmed.correct { opacity: 1; }
+
+    .feedback-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      min-height: 22px;
+      text-align: center;
+    }
+
+    .feedback-text.correct { color: #2ecc71; }
+    .feedback-text.wrong { color: #e74c3c; }
+
+    /* Results screen */
+    #results-screen.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 72px);
+      padding: 20px;
+    }
+
+    .results-card {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .results-grade {
+      font-size: 4rem;
+      font-weight: 800;
+      color: #e94560;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .results-comment {
+      font-size: 1rem;
+      color: #aaa;
+      margin-bottom: 24px;
+    }
+
+    .results-total {
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+      color: #ccc;
+    }
+
+    .results-total strong {
+      color: #e94560;
+      font-size: 1.4rem;
+    }
+
+    .btn-replay {
+      background: #e94560;
+      color: #fff;
+      border: none;
+      padding: 12px 40px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+    }
+
+    .btn-replay:hover { background: #d63651; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .game-hud { gap: 16px; }
+      .canvas-wrap { max-width: 360px; }
+      .question-text { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>DOTA 2</h2>
+      <span>Analysis</span>
+    </div>
+    <nav>
+      <a href="index.html">
+        <span class="nav-icon">&#9813;</span>
+        Hero Stats
+      </a>
+      <a href="compare.html">
+        <span class="nav-icon">&#9878;</span>
+        Hero Comparison
+      </a>
+      <a href="lane-matchup.html">
+        <span class="nav-icon">&#9876;</span>
+        Lane Matchup
+      </a>
+      <a href="click-trainer.html">
+        <span class="nav-icon">&#9678;</span>
+        Click Trainer
+      </a>
+      <a href="simulator.html">
+        <span class="nav-icon">&#9654;</span>
+        Simulator
+      </a>
+      <a href="creep-quiz.html" class="active">
+        <span class="nav-icon">&#9820;</span>
+        Creep Quiz
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    <header>
+      <h1>Creep Wave Quiz</h1>
+    </header>
+
+    <!-- Pre-game -->
+    <div id="pregame-screen" class="screen active">
+      <div class="intro-card">
+        <h2>Creep Wave Position</h2>
+        <p>Test your map awareness! Given a game time, identify where an uncontested creep wave is along a lane on the minimap.</p>
+        <div class="intro-rules">
+          <div>
+            <span class="rule-icon">&#9881;</span>
+            <span>10 rounds per game</span>
+          </div>
+          <div>
+            <span class="rule-icon">&#9733;</span>
+            <span>Pick the correct lane segment (1-5) where the creep wave is</span>
+          </div>
+          <div>
+            <span class="rule-icon">&#9678;</span>
+            <span>Click buttons, press 1-5, or click directly on the map</span>
+          </div>
+          <div>
+            <span class="rule-icon">&#9876;</span>
+            <span>Learn creep timing to improve your map awareness</span>
+          </div>
+        </div>
+        <button class="btn-start" id="btn-start">Start Quiz</button>
+      </div>
+    </div>
+
+    <!-- Game -->
+    <div id="game-screen" class="screen">
+      <div class="game-hud">
+        <div class="hud-item">
+          <div class="hud-label">Round</div>
+          <div class="hud-value" id="hud-round">0 / 10</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Score</div>
+          <div class="hud-value accent" id="hud-score">0</div>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="question-text" id="question-text"></div>
+        <div class="canvas-wrap">
+          <canvas id="minimap"></canvas>
+        </div>
+        <div class="segment-buttons" id="segment-buttons"></div>
+        <div class="feedback-text" id="feedback-text"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-screen" class="screen">
+      <div class="results-card">
+        <div class="results-grade" id="results-grade"></div>
+        <div class="results-comment" id="results-comment"></div>
+        <div class="results-total">
+          Score: <strong id="results-total">0</strong> / 10
+        </div>
+        <button class="btn-replay" id="btn-replay">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Constants ──────────────────────────────────────────────────────
+    const CREEP_SPEED = 325;
+    const SPAWN_INTERVAL = 30;
+    const MAP_SIZE = 16384;
+    const TOTAL_ROUNDS = 10;
+    const FEEDBACK_DELAY = 1500;
+
+    // Segment colors
+    const SEG_COLORS = [
+      '#e94560', // red
+      '#f39c12', // orange
+      '#2ecc71', // green
+      '#3498db', // blue
+      '#9b59b6', // purple
+    ];
+
+    // Actual Dota 2 lane distances (game units, one direction base-to-base)
+    // Side lanes: midway at ~30s => total ≈ 325 * 30 * 2 = 19500
+    // Mid lane: midway at ~16s => total ≈ 325 * 16 * 2 = 10400
+    const LANE_DISTANCE = {
+      top: 19500,
+      mid: 10400,
+      bot: 19500,
+    };
+
+    // Lane paths as normalized [x, y] coordinates (0-1 range) — visual only
+    // Radiant perspective: creeps go from Radiant base toward Dire base
+    const LANE_PATHS = {
+      top: [
+        [0.10, 0.80], // Radiant base area
+        [0.10, 0.50],
+        [0.10, 0.25],
+        [0.15, 0.15],
+        [0.35, 0.12],
+        [0.55, 0.10],
+        [0.75, 0.10],
+        [0.88, 0.12], // Dire base area
+      ],
+      mid: [
+        [0.18, 0.82], // Radiant base area
+        [0.30, 0.70],
+        [0.42, 0.58],
+        [0.50, 0.50],
+        [0.58, 0.42],
+        [0.70, 0.30],
+        [0.82, 0.18], // Dire base area
+      ],
+      bot: [
+        [0.12, 0.88], // Radiant base area
+        [0.25, 0.90],
+        [0.45, 0.90],
+        [0.65, 0.88],
+        [0.85, 0.85],
+        [0.90, 0.70],
+        [0.90, 0.50],
+        [0.90, 0.25], // Dire base area
+      ],
+    };
+
+    // ── State ──────────────────────────────────────────────────────────
+    let round = 0;
+    let score = 0;
+    let answered = false;
+    let currentScenario = null;
+    let feedbackTimeout = null;
+
+    // Canvas
+    let canvas, ctx;
+    let canvasSize = 500;
+
+    // ── DOM ────────────────────────────────────────────────────────────
+    const $pregame = document.getElementById('pregame-screen');
+    const $game = document.getElementById('game-screen');
+    const $results = document.getElementById('results-screen');
+    const $hudRound = document.getElementById('hud-round');
+    const $hudScore = document.getElementById('hud-score');
+    const $questionText = document.getElementById('question-text');
+    const $segButtons = document.getElementById('segment-buttons');
+    const $feedback = document.getElementById('feedback-text');
+
+    // ── Screen management ─────────────────────────────────────────────
+    function showScreen(screen) {
+      $pregame.classList.remove('active');
+      $game.classList.remove('active');
+      $results.classList.remove('active');
+      screen.classList.add('active');
+    }
+
+    // ── Path utilities ────────────────────────────────────────────────
+    function getPath(lane, team) {
+      const radiantPath = LANE_PATHS[lane];
+      if (team === 'radiant') return radiantPath;
+      // Dire: reversed path (creeps go from Dire base to Radiant base)
+      return [...radiantPath].reverse();
+    }
+
+    // Visual path segment lengths (normalized coords, unitless)
+    function visualSegmentLengths(path) {
+      const lengths = [];
+      for (let i = 1; i < path.length; i++) {
+        const dx = path[i][0] - path[i - 1][0];
+        const dy = path[i][1] - path[i - 1][1];
+        lengths.push(Math.sqrt(dx * dx + dy * dy));
+      }
+      return lengths;
+    }
+
+    function totalVisualLength(path) {
+      return visualSegmentLengths(path).reduce((a, b) => a + b, 0);
+    }
+
+    // Interpolate along the visual path at a given visual distance
+    function interpolateVisual(path, visualDist) {
+      const segLengths = visualSegmentLengths(path);
+      let remaining = visualDist;
+
+      for (let i = 0; i < segLengths.length; i++) {
+        if (remaining <= segLengths[i]) {
+          const t = remaining / segLengths[i];
+          return [
+            path[i][0] + (path[i + 1][0] - path[i][0]) * t,
+            path[i][1] + (path[i + 1][1] - path[i][1]) * t,
+          ];
+        }
+        remaining -= segLengths[i];
+      }
+      return path[path.length - 1];
+    }
+
+    // Convert game-unit distance to visual distance along a lane's path
+    function gameDistToVisualDist(lane, gameDist) {
+      const realTotal = LANE_DISTANCE[lane];
+      const path = LANE_PATHS[lane]; // always use base path for length ratio
+      const visTotal = totalVisualLength(path);
+      return (gameDist / realTotal) * visTotal;
+    }
+
+    function getCreepPosition(lane, path, gameTime) {
+      const waveNumber = Math.floor(gameTime / SPAWN_INTERVAL);
+      const spawnTime = waveNumber * SPAWN_INTERVAL;
+      const gameDist = (gameTime - spawnTime) * CREEP_SPEED;
+      const visDist = gameDistToVisualDist(lane, gameDist);
+      return interpolateVisual(path, visDist);
+    }
+
+    // Divide path into 5 equal visual-length segments, return info
+    // Segments are divided visually; game-unit boundaries are computed via lane distance
+    function getSegments(lane, path) {
+      const visLengths = visualSegmentLengths(path);
+      const visTotal = visLengths.reduce((a, b) => a + b, 0);
+      const visSeg = visTotal / 5;
+      const realTotal = LANE_DISTANCE[lane];
+      const segments = [];
+
+      for (let s = 0; s < 5; s++) {
+        const visStart = s * visSeg;
+        const visEnd = (s + 1) * visSeg;
+        const visMid = (visStart + visEnd) / 2;
+
+        // Corresponding game-unit boundaries
+        const gameStart = (visStart / visTotal) * realTotal;
+        const gameEnd = (visEnd / visTotal) * realTotal;
+
+        const midPos = interpolateVisual(path, visMid);
+
+        // Build polyline points along this visual segment
+        const startPos = interpolateVisual(path, visStart);
+        const points = [startPos];
+        let cumDist = 0;
+        for (let i = 0; i < visLengths.length; i++) {
+          const segStart = cumDist;
+          const segEnd = cumDist + visLengths[i];
+
+          if (segEnd > visStart && segStart < visEnd) {
+            if (segEnd <= visEnd) {
+              points.push(path[i + 1]);
+            } else {
+              points.push(interpolateVisual(path, visEnd));
+            }
+          }
+          cumDist += visLengths[i];
+        }
+
+        segments.push({
+          index: s,
+          gameStart,
+          gameEnd,
+          midPos,
+          points,
+          color: SEG_COLORS[s],
+        });
+      }
+
+      return segments;
+    }
+
+    function getCorrectSegment(segments, gameTime) {
+      const waveNumber = Math.floor(gameTime / SPAWN_INTERVAL);
+      const spawnTime = waveNumber * SPAWN_INTERVAL;
+      const gameDist = (gameTime - spawnTime) * CREEP_SPEED;
+
+      for (let i = 0; i < segments.length; i++) {
+        if (gameDist >= segments[i].gameStart && gameDist <= segments[i].gameEnd) {
+          return i;
+        }
+      }
+      // Past path end — last segment
+      return 4;
+    }
+
+    // ── Scenario generation ───────────────────────────────────────────
+    function generateScenario() {
+      const lanes = ['top', 'mid', 'bot'];
+      const teams = ['radiant', 'dire'];
+      const lane = lanes[Math.floor(Math.random() * lanes.length)];
+      const team = teams[Math.floor(Math.random() * teams.length)];
+
+      // Wave 0-19, offset 3-27s
+      const wave = Math.floor(Math.random() * 20);
+      const offset = 3 + Math.floor(Math.random() * 25);
+      const gameTime = wave * SPAWN_INTERVAL + offset;
+
+      const path = getPath(lane, team);
+      const segments = getSegments(lane, path);
+      const correctSegment = getCorrectSegment(segments, gameTime);
+      const creepPos = getCreepPosition(lane, path, gameTime);
+
+      return { lane, team, gameTime, path, segments, correctSegment, creepPos };
+    }
+
+    // ── Canvas rendering ──────────────────────────────────────────────
+    function initCanvas() {
+      canvas = document.getElementById('minimap');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+    }
+
+    function resizeCanvas() {
+      const wrap = canvas.parentElement;
+      const size = wrap.clientWidth;
+      canvasSize = size;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function toCanvas(nx, ny) {
+      return [nx * canvasSize, ny * canvasSize];
+    }
+
+    function drawMinimap(scenario, showAnswer) {
+      const s = canvasSize;
+      ctx.clearRect(0, 0, s, s);
+
+      // Background
+      ctx.fillStyle = '#0d1117';
+      ctx.fillRect(0, 0, s, s);
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 10; i++) {
+        const pos = (i / 10) * s;
+        ctx.beginPath(); ctx.moveTo(pos, 0); ctx.lineTo(pos, s); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, pos); ctx.lineTo(s, pos); ctx.stroke();
+      }
+
+      // River — curved line from top-right to bottom-left
+      ctx.beginPath();
+      ctx.moveTo(s * 0.95, s * 0.05);
+      ctx.bezierCurveTo(s * 0.65, s * 0.35, s * 0.35, s * 0.65, s * 0.05, s * 0.95);
+      ctx.strokeStyle = 'rgba(52, 152, 219, 0.25)';
+      ctx.lineWidth = s * 0.04;
+      ctx.stroke();
+
+      // Radiant base (bottom-left)
+      ctx.beginPath();
+      ctx.arc(s * 0.10, s * 0.90, s * 0.06, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(39, 174, 96, 0.3)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(39, 174, 96, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Dire base (top-right)
+      ctx.beginPath();
+      ctx.arc(s * 0.90, s * 0.10, s * 0.06, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(231, 76, 60, 0.3)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(231, 76, 60, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw all lanes dimly
+      const allLanes = ['top', 'mid', 'bot'];
+      for (const lane of allLanes) {
+        if (scenario && lane === scenario.lane) continue; // draw target lane separately
+        const path = LANE_PATHS[lane];
+        ctx.beginPath();
+        const [sx, sy] = toCanvas(path[0][0], path[0][1]);
+        ctx.moveTo(sx, sy);
+        for (let i = 1; i < path.length; i++) {
+          const [px, py] = toCanvas(path[i][0], path[i][1]);
+          ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+
+      if (!scenario) return;
+
+      // Draw target lane segments with colors
+      const { segments, correctSegment, creepPos } = scenario;
+
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        const pts = seg.points;
+        if (pts.length < 2) continue;
+
+        let alpha = showAnswer ? (i === correctSegment ? 1 : 0.25) : 0.8;
+
+        ctx.beginPath();
+        const [sx, sy] = toCanvas(pts[0][0], pts[0][1]);
+        ctx.moveTo(sx, sy);
+        for (let j = 1; j < pts.length; j++) {
+          const [px, py] = toCanvas(pts[j][0], pts[j][1]);
+          ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = seg.color;
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Numbered circle at midpoint
+        const [mx, my] = toCanvas(seg.midPos[0], seg.midPos[1]);
+        const circleAlpha = showAnswer ? (i === correctSegment ? 1 : 0.3) : 1;
+
+        ctx.globalAlpha = circleAlpha;
+        ctx.beginPath();
+        ctx.arc(mx, my, 14, 0, Math.PI * 2);
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), mx, my);
+        ctx.globalAlpha = 1;
+      }
+
+      // Show creep marker if answer revealed
+      if (showAnswer) {
+        const [cx, cy] = toCanvas(creepPos[0], creepPos[1]);
+
+        // Glow
+        ctx.beginPath();
+        ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(241, 196, 15, 0.3)';
+        ctx.fill();
+
+        // Dot
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#f1c40f';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    // ── Canvas click hit-test ─────────────────────────────────────────
+    function distToSegmentLine(px, py, points) {
+      let minDist = Infinity;
+      for (let i = 0; i < points.length - 1; i++) {
+        const [ax, ay] = toCanvas(points[i][0], points[i][1]);
+        const [bx, by] = toCanvas(points[i + 1][0], points[i + 1][1]);
+        const d = pointToSegmentDist(px, py, ax, ay, bx, by);
+        if (d < minDist) minDist = d;
+      }
+      return minDist;
+    }
+
+    function pointToSegmentDist(px, py, ax, ay, bx, by) {
+      const dx = bx - ax;
+      const dy = by - ay;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.sqrt((px - ax) ** 2 + (py - ay) ** 2);
+      let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      const projX = ax + t * dx;
+      const projY = ay + t * dy;
+      return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+    }
+
+    function hitTestSegment(canvasX, canvasY) {
+      if (!currentScenario) return -1;
+      const threshold = 25;
+      let bestIdx = -1;
+      let bestDist = Infinity;
+
+      for (let i = 0; i < currentScenario.segments.length; i++) {
+        const seg = currentScenario.segments[i];
+        const d = distToSegmentLine(canvasX, canvasY, seg.points);
+        if (d < threshold && d < bestDist) {
+          bestDist = d;
+          bestIdx = i;
+        }
+      }
+      return bestIdx;
+    }
+
+    // ── Game logic ────────────────────────────────────────────────────
+    function startGame() {
+      round = 0;
+      score = 0;
+      $hudScore.textContent = '0';
+      showScreen($game);
+      initCanvas();
+      nextRound();
+    }
+
+    function nextRound() {
+      round++;
+      if (round > TOTAL_ROUNDS) {
+        showResults();
+        return;
+      }
+
+      answered = false;
+      $hudRound.textContent = round + ' / ' + TOTAL_ROUNDS;
+      $feedback.textContent = '';
+      $feedback.className = 'feedback-text';
+
+      currentScenario = generateScenario();
+      const { lane, team, gameTime } = currentScenario;
+
+      const minutes = Math.floor(gameTime / 60);
+      const seconds = gameTime % 60;
+      const timeStr = minutes + ':' + String(seconds).padStart(2, '0');
+      const laneLabel = lane.charAt(0).toUpperCase() + lane.slice(1);
+
+      $questionText.innerHTML =
+        `Where is the <span class="team-${team}">${team.charAt(0).toUpperCase() + team.slice(1)}</span> ` +
+        `<span class="lane-name">${laneLabel}</span> lane creep wave at ` +
+        `<span class="game-time">${timeStr}</span>?`;
+
+      // Render segment buttons
+      $segButtons.innerHTML = currentScenario.segments.map((seg, i) =>
+        `<button class="seg-btn" data-seg="${i}" style="border-color: ${seg.color}">` +
+        `<span class="key-hint">${i + 1}</span>${i + 1}</button>`
+      ).join('');
+
+      $segButtons.querySelectorAll('.seg-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleAnswer(parseInt(btn.dataset.seg)));
+      });
+
+      drawMinimap(currentScenario, false);
+    }
+
+    function handleAnswer(segIndex) {
+      if (answered || !currentScenario) return;
+      answered = true;
+
+      const correct = segIndex === currentScenario.correctSegment;
+
+      if (correct) {
+        score++;
+        $hudScore.textContent = score;
+        $feedback.textContent = 'Correct!';
+        $feedback.className = 'feedback-text correct';
+      } else {
+        $feedback.textContent = `Wrong! Segment ${currentScenario.correctSegment + 1} was correct.`;
+        $feedback.className = 'feedback-text wrong';
+      }
+
+      // Update button styles
+      $segButtons.querySelectorAll('.seg-btn').forEach(btn => {
+        const idx = parseInt(btn.dataset.seg);
+        btn.classList.add('dimmed');
+        if (idx === currentScenario.correctSegment) {
+          btn.classList.add('correct');
+        }
+        if (idx === segIndex && !correct) {
+          btn.classList.add('wrong');
+        }
+      });
+
+      // Show answer on map
+      drawMinimap(currentScenario, true);
+
+      // Advance after delay
+      feedbackTimeout = setTimeout(() => nextRound(), FEEDBACK_DELAY);
+    }
+
+    function showResults() {
+      const pct = Math.round((score / TOTAL_ROUNDS) * 100);
+
+      let grade, comment;
+      if (pct >= 90) { grade = 'S'; comment = 'Immortal-tier map awareness!'; }
+      else if (pct >= 80) { grade = 'A'; comment = 'Divine — you know your creep timings'; }
+      else if (pct >= 70) { grade = 'B'; comment = 'Ancient — solid understanding'; }
+      else if (pct >= 60) { grade = 'C'; comment = 'Legend — keep practicing'; }
+      else if (pct >= 50) { grade = 'D'; comment = 'Archon — room to improve'; }
+      else { grade = 'F'; comment = 'Herald — the journey begins here'; }
+
+      document.getElementById('results-grade').textContent = grade;
+      document.getElementById('results-comment').textContent = comment;
+      document.getElementById('results-total').textContent = score;
+
+      showScreen($results);
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-replay').addEventListener('click', () => {
+      showScreen($pregame);
+    });
+
+    // Keyboard shortcuts 1-5
+    document.addEventListener('keydown', (e) => {
+      if (!$game.classList.contains('active') || answered) return;
+      const idx = parseInt(e.key) - 1;
+      if (idx >= 0 && idx < 5) handleAnswer(idx);
+    });
+
+    // Canvas click
+    document.getElementById('minimap').addEventListener('click', (e) => {
+      if (!$game.classList.contains('active') || answered) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvasSize / rect.width;
+      const scaleY = canvasSize / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      const segIdx = hitTestSegment(x, y);
+      if (segIdx >= 0) handleAnswer(segIdx);
+    });
+
+    // Resize
+    window.addEventListener('resize', () => {
+      if ($game.classList.contains('active') && canvas) {
+        resizeCanvas();
+        if (currentScenario) drawMinimap(currentScenario, answered);
+      }
+    });
+
+    // Sidebar toggle
+    document.getElementById('sidebar-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    });
+    document.getElementById('sidebar-overlay').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    });
+  </script>
+</body>
+</html>
