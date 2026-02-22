@@ -10,7 +10,8 @@
     { href: 'lane-matchup.html', icon: '&#9876;', label: 'Lane Matchup' },
     { href: 'hero-trivia.html', icon: '&#9678;', label: 'Hero Trivia' },
     { href: 'simulator.html', icon: '&#9654;', label: 'Simulator' },
-    { href: 'creep-quiz.html', icon: '&#9820;', label: 'Creep Wave Timer' }
+    { href: 'creep-quiz.html', icon: '&#9820;', label: 'Creep Wave Timer' },
+    { href: 'items.html', icon: '&#9775;', label: 'Items' }
   ];
 
   var navHtml = navLinks.map(function(l) {
