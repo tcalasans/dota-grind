@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Click Trainer - Dota 2</title>
+  <title>Hero Trivia - Dota 2</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -259,20 +259,18 @@
     .game-area {
       height: calc(100vh - 72px - 65px - 3px);
       min-height: 400px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    /* Quiz panel — overlay centered on click grid */
+    /* Quiz panel */
     .quiz-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      background: rgba(22, 33, 62, 0.85);
+      background: #16213e;
       border: 1px solid #0f3460;
       border-radius: 12px;
       max-width: 400px;
@@ -380,84 +378,6 @@
       transition: width linear;
     }
 
-    /* Click grid */
-    .click-grid {
-      width: 100%;
-      height: 100%;
-      background: #0a0a0a;
-      position: relative;
-      cursor: crosshair;
-      overflow: hidden;
-      user-select: none;
-    }
-
-    .click-grid-label {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #333;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      pointer-events: none;
-    }
-
-    .dot {
-      position: absolute;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #e94560;
-      transform: translate(-50%, -50%);
-      cursor: pointer;
-      animation: dot-spawn 0.15s ease-out;
-      box-shadow: 0 0 12px rgba(233, 69, 96, 0.6);
-      z-index: 20;
-    }
-
-    @keyframes dot-spawn {
-      0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    }
-
-    .dot.hit {
-      animation: dot-hit 0.25s ease-out forwards;
-      pointer-events: none;
-    }
-
-    @keyframes dot-hit {
-      0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-      100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
-    }
-
-    .dot.missed {
-      animation: dot-miss 0.3s ease-out forwards;
-      pointer-events: none;
-    }
-
-    @keyframes dot-miss {
-      0% { transform: translate(-50%, -50%) scale(1); opacity: 1; background: #e94560; }
-      100% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; background: #555; }
-    }
-
-    .click-timer-bar-wrap {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: #1a1a2e;
-      z-index: 5;
-    }
-
-    .click-timer-bar {
-      height: 100%;
-      background: #e94560;
-      width: 100%;
-      transition: width linear;
-    }
-
     /* Results screen */
     #results-screen.active {
       display: flex;
@@ -520,17 +440,6 @@
       margin-top: 4px;
     }
 
-    .results-total {
-      font-size: 1.1rem;
-      margin-bottom: 24px;
-      color: #ccc;
-    }
-
-    .results-total strong {
-      color: #e94560;
-      font-size: 1.4rem;
-    }
-
     .btn-replay {
       background: #e94560;
       color: #fff;
@@ -584,9 +493,9 @@
         <span class="nav-icon">&#9876;</span>
         Lane Matchup
       </a>
-      <a href="click-trainer.html" class="active">
+      <a href="hero-trivia.html" class="active">
         <span class="nav-icon">&#9678;</span>
-        Click Trainer
+        Hero Trivia
       </a>
       <a href="simulator.html">
         <span class="nav-icon">&#9654;</span>
@@ -601,30 +510,26 @@
 
   <div class="main-content">
     <header>
-      <h1>Click Trainer</h1>
+      <h1>Hero Trivia</h1>
     </header>
 
     <!-- Pre-game -->
     <div id="pregame-screen" class="screen active">
       <div class="intro-card">
-        <h2>Multitask Training</h2>
-        <p>Test your Dota 2 knowledge and reflexes at the same time. Answer hero quiz questions while clicking appearing dots before they vanish.</p>
+        <h2>Hero Trivia</h2>
+        <p>Test your Dota 2 hero knowledge! Answer 30 trivia questions about heroes, abilities, and attributes.</p>
         <div class="intro-rules">
           <div>
             <span class="rule-icon">&#9881;</span>
-            <span>30 rounds, 3 seconds each (90s total)</span>
+            <span>30 questions, 3 seconds each</span>
           </div>
           <div>
             <span class="rule-icon">&#9733;</span>
-            <span>Quiz: answer hero questions for 1 point each (press 1-4)</span>
-          </div>
-          <div>
-            <span class="rule-icon">&#9678;</span>
-            <span>Clicks: hit the dot within 1 second for 1 point each</span>
+            <span>Answer hero questions for 1 point each (press 1-4)</span>
           </div>
           <div>
             <span class="rule-icon">&#9876;</span>
-            <span>Max score: 60 (30 quiz + 30 clicks)</span>
+            <span>Max score: 30</span>
           </div>
         </div>
         <button class="btn-start" id="btn-start">Start Game</button>
@@ -643,12 +548,8 @@
           <div class="hud-value accent" id="hud-timer">60s</div>
         </div>
         <div class="hud-item">
-          <div class="hud-label">Quiz Score</div>
+          <div class="hud-label">Score</div>
           <div class="hud-value" id="hud-quiz">0</div>
-        </div>
-        <div class="hud-item">
-          <div class="hud-label">Click Score</div>
-          <div class="hud-value" id="hud-clicks">0</div>
         </div>
       </div>
       <div class="hud-timer">
@@ -656,19 +557,13 @@
       </div>
 
       <div class="game-area">
-        <div class="click-grid" id="click-grid">
-          <div class="quiz-panel">
-            <img class="quiz-hero-img" id="quiz-img" src="" alt="">
-            <div class="quiz-question" id="quiz-question"></div>
-            <div class="quiz-options" id="quiz-options"></div>
-            <div class="quiz-feedback" id="quiz-feedback"></div>
-            <div class="quiz-timer-bar-wrap">
-              <div class="quiz-timer-bar" id="quiz-timer-bar"></div>
-            </div>
-          </div>
-          <div class="click-grid-label">Click the dots!</div>
-          <div class="click-timer-bar-wrap">
-            <div class="click-timer-bar" id="click-timer-bar"></div>
+        <div class="quiz-panel">
+          <img class="quiz-hero-img" id="quiz-img" src="" alt="">
+          <div class="quiz-question" id="quiz-question"></div>
+          <div class="quiz-options" id="quiz-options"></div>
+          <div class="quiz-feedback" id="quiz-feedback"></div>
+          <div class="quiz-timer-bar-wrap">
+            <div class="quiz-timer-bar" id="quiz-timer-bar"></div>
           </div>
         </div>
       </div>
@@ -682,15 +577,8 @@
         <div class="results-breakdown">
           <div class="results-stat">
             <div class="rs-value" id="results-quiz">0</div>
-            <div class="rs-label">Quiz (/ 30)</div>
+            <div class="rs-label">Score (/ 30)</div>
           </div>
-          <div class="results-stat">
-            <div class="rs-value" id="results-clicks">0</div>
-            <div class="rs-label">Clicks (/ 30)</div>
-          </div>
-        </div>
-        <div class="results-total">
-          Combined: <strong id="results-total">0</strong> / 60
         </div>
         <button class="btn-replay" id="btn-replay">Play Again</button>
       </div>
@@ -702,17 +590,14 @@
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     const TOTAL_ROUNDS = 30;
     const ROUND_DURATION = 3000;
-    const DOT_LIFETIME = 1000;
 
     // State
     let round = 0;
     let quizScore = 0;
-    let clickScore = 0;
     let answered = false;
     let correctAnswer = null;
     let roundInterval = null;
     let globalTimerInterval = null;
-    let dotTimeout = null;
     let gameStartTime = 0;
     let usedQuizIndices = [];
 
@@ -723,15 +608,12 @@
     const $hudRound = document.getElementById('hud-round');
     const $hudTimer = document.getElementById('hud-timer');
     const $hudQuiz = document.getElementById('hud-quiz');
-    const $hudClicks = document.getElementById('hud-clicks');
     const $hudTimerBar = document.getElementById('hud-timer-bar');
     const $quizImg = document.getElementById('quiz-img');
     const $quizQuestion = document.getElementById('quiz-question');
     const $quizOptions = document.getElementById('quiz-options');
     const $quizFeedback = document.getElementById('quiz-feedback');
     const $quizTimerBar = document.getElementById('quiz-timer-bar');
-    const $clickGrid = document.getElementById('click-grid');
-    const $clickTimerBar = document.getElementById('click-timer-bar');
 
     function showScreen(screen) {
       $pregame.classList.remove('active');
@@ -811,62 +693,11 @@
       }
     }
 
-    function spawnDot() {
-      // Remove any existing dot
-      const oldDot = $clickGrid.querySelector('.dot');
-      if (oldDot) oldDot.remove();
-      clearTimeout(dotTimeout);
-
-      const grid = $clickGrid.getBoundingClientRect();
-      const pad = 30;
-      const x = pad + Math.random() * (grid.width - pad * 2);
-      const y = pad + Math.random() * (grid.height - pad * 2 - 4); // -4 for timer bar
-
-      const dot = document.createElement('div');
-      dot.className = 'dot';
-      dot.style.left = x + 'px';
-      dot.style.top = y + 'px';
-      $clickGrid.appendChild(dot);
-
-      dot.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleDotClick(dot);
-      });
-
-      // Animate click timer bar
-      $clickTimerBar.style.transition = 'none';
-      $clickTimerBar.style.width = '100%';
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          $clickTimerBar.style.transition = `width ${DOT_LIFETIME}ms linear`;
-          $clickTimerBar.style.width = '0%';
-        });
-      });
-
-      dotTimeout = setTimeout(() => {
-        if (dot.parentNode && !dot.classList.contains('hit')) {
-          dot.classList.add('missed');
-          setTimeout(() => dot.remove(), 300);
-        }
-      }, DOT_LIFETIME);
-    }
-
-    function handleDotClick(dot) {
-      if (dot.classList.contains('hit') || dot.classList.contains('missed')) return;
-      dot.classList.add('hit');
-      clickScore++;
-      $hudClicks.textContent = clickScore;
-      clearTimeout(dotTimeout);
-      setTimeout(() => dot.remove(), 250);
-    }
-
     function startGame() {
       round = 0;
       quizScore = 0;
-      clickScore = 0;
       usedQuizIndices = [];
       $hudQuiz.textContent = '0';
-      $hudClicks.textContent = '0';
       $hudRound.textContent = '0 / ' + TOTAL_ROUNDS;
 
       showScreen($game);
@@ -908,19 +739,13 @@
 
       $hudRound.textContent = round + ' / ' + TOTAL_ROUNDS;
       generateQuestion();
-      spawnDot();
     }
 
     function endGame() {
       clearInterval(roundInterval);
       clearInterval(globalTimerInterval);
-      clearTimeout(dotTimeout);
       roundInterval = null;
       globalTimerInterval = null;
-
-      // Clean up remaining dot
-      const dot = $clickGrid.querySelector('.dot');
-      if (dot) dot.remove();
 
       // Mark last question if unanswered
       markMissed();
@@ -929,13 +754,12 @@
     }
 
     function showResults() {
-      const total = quizScore + clickScore;
-      const pct = Math.round((total / 60) * 100);
+      const pct = Math.round((quizScore / 30) * 100);
 
       let grade, comment;
       if (pct >= 90) { grade = 'S'; comment = 'Immortal — you are the top 0.1%'; }
-      else if (pct >= 80) { grade = 'A'; comment = 'Divine — exceptional multitasking'; }
-      else if (pct >= 70) { grade = 'B'; comment = 'Ancient — solid game knowledge & reflexes'; }
+      else if (pct >= 80) { grade = 'A'; comment = 'Divine — exceptional hero knowledge'; }
+      else if (pct >= 70) { grade = 'B'; comment = 'Ancient — solid game knowledge'; }
       else if (pct >= 60) { grade = 'C'; comment = 'Legend — room to improve'; }
       else if (pct >= 50) { grade = 'D'; comment = 'Archon — keep practicing!'; }
       else { grade = 'F'; comment = 'Herald — the journey begins here'; }
@@ -943,8 +767,6 @@
       document.getElementById('results-grade').textContent = grade;
       document.getElementById('results-comment').textContent = comment;
       document.getElementById('results-quiz').textContent = quizScore;
-      document.getElementById('results-clicks').textContent = clickScore;
-      document.getElementById('results-total').textContent = total;
 
       showScreen($results);
     }
