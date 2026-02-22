@@ -805,8 +805,9 @@
     }
 
     function updateAnalyzeBtn() {
-      const allFilled = Object.values(slots).every(s => s !== null);
-      document.getElementById('analyze-btn').disabled = !allFilled;
+      const hasCores = slots.offlaner && slots.carry;
+      const hasSupports = slots.pos4 && slots.pos5;
+      document.getElementById('analyze-btn').disabled = !(hasCores || hasSupports);
     }
 
     // Hero Picker
@@ -999,14 +1000,23 @@
     function runAnalysis() {
       document.getElementById('results-area').classList.add('visible');
 
+      const coreEl = document.getElementById('core-matchup');
+      const supportEl = document.getElementById('support-matchup');
+
       if (slots.offlaner && slots.carry) {
-        document.getElementById('core-matchup').innerHTML =
-          renderMatchupComparison(slots.offlaner, slots.carry, selectedLevel);
+        coreEl.innerHTML = renderMatchupComparison(slots.offlaner, slots.carry, selectedLevel);
+        coreEl.parentElement.style.display = '';
+      } else {
+        coreEl.innerHTML = '';
+        coreEl.parentElement.style.display = 'none';
       }
 
       if (slots.pos4 && slots.pos5) {
-        document.getElementById('support-matchup').innerHTML =
-          renderMatchupComparison(slots.pos4, slots.pos5, selectedLevel);
+        supportEl.innerHTML = renderMatchupComparison(slots.pos4, slots.pos5, selectedLevel);
+        supportEl.parentElement.style.display = '';
+      } else {
+        supportEl.innerHTML = '';
+        supportEl.parentElement.style.display = 'none';
       }
     }
 
