@@ -550,6 +550,24 @@
       text-transform: uppercase;
     }
 
+    .matchup-header .hero-roles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .matchup-header .hero-roles .role-tag {
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(15, 52, 96, 0.6);
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
     .matchup-header-label {
       background: #0f1a2e;
       font-size: 0.8rem;
@@ -1045,6 +1063,7 @@
 
     function renderMatchupHeader(hero, side) {
       const attrLabels = { str: 'Strength', agi: 'Agility', int: 'Intelligence', all: 'Universal' };
+      const roles = (hero.roles || []).map(r => `<span class="role-tag">${r}</span>`).join('');
       return `
         <div class="matchup-header matchup-row-${side}">
           <img src="${CDN}${hero.img}" alt="${hero.localized_name}">
@@ -1052,6 +1071,7 @@
             <div class="name">${hero.localized_name}</div>
             <div class="attr">${attrLabels[hero.primary_attr] || hero.primary_attr}</div>
           </div>
+          <div class="hero-roles">${roles}</div>
         </div>
       `;
     }
