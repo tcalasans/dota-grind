@@ -559,83 +559,114 @@
       letter-spacing: 1px;
     }
 
-    /* Spell cards */
-    .spells-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    /* Stat comparison rows */
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 1fr;
+      min-height: 0;
     }
 
-    .spell-card {
+    .stat-row + .stat-row {
+      border-top: 1px solid #0f3460;
+    }
+
+    .stat-cell {
       display: flex;
-      gap: 10px;
-      padding: 8px;
-      background: #16213e;
+      align-items: center;
+      padding: 10px 14px;
+      background: #1a1a2e;
+      position: relative;
+      overflow: hidden;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #ccc;
+    }
+
+    .stat-cell .stat-bar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      background: rgba(15, 52, 96, 0.5);
+      transition: width 0.3s ease;
+    }
+
+    .stat-cell .stat-value {
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat-cell.left {
+      justify-content: flex-end;
+      border-right: 1px solid #0f3460;
+    }
+
+    .stat-cell.left .stat-bar {
+      right: 0;
+    }
+
+    .stat-cell.right {
+      justify-content: flex-start;
+      border-left: 1px solid #0f3460;
+    }
+
+    .stat-cell.right .stat-bar {
+      left: 0;
+    }
+
+    .stat-cell.winner {
+      color: #e94560;
+    }
+
+    .stat-cell.winner .stat-bar {
+      background: rgba(233, 69, 96, 0.15);
+    }
+
+    .stat-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f1a2e;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      padding: 8px 4px;
+      text-align: center;
+    }
+
+    /* Level selector */
+    .level-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 0;
+      margin-bottom: 16px;
+    }
+
+    .level-selector .level-label {
+      font-size: 0.8rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-right: 4px;
+    }
+
+    .level-btn {
+      padding: 6px 12px;
       border-radius: 6px;
       border: 1px solid #0f3460;
-    }
-
-    .spell-card img {
-      width: 40px;
-      height: 40px;
-      border-radius: 4px;
-      flex-shrink: 0;
-    }
-
-    .spell-card .spell-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .spell-card .spell-name {
-      font-size: 0.8rem;
-      font-weight: 700;
+      background: #1a1a2e;
       color: #e0e0e0;
-      margin-bottom: 2px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.2s;
     }
 
-    .spell-card .spell-meta {
-      display: flex;
-      gap: 10px;
-      font-size: 0.7rem;
-      color: #888;
-      flex-wrap: wrap;
-    }
-
-    .spell-card .spell-meta .cd {
-      color: #3498db;
-    }
-
-    .spell-card .spell-meta .mc {
-      color: #2980b9;
-    }
-
-    .spell-card .spell-meta .dmg {
-      color: #e94560;
-    }
-
-    .spell-card .spell-meta .dmg-type-magical {
-      color: #3498db;
-    }
-
-    .spell-card .spell-meta .dmg-type-physical {
-      color: #e94560;
-    }
-
-    .spell-card .spell-meta .dmg-type-pure {
-      color: #f39c12;
-    }
-
-    .spell-card .spell-desc {
-      font-size: 0.7rem;
-      color: #777;
-      margin-top: 4px;
-      line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
+    .level-btn:hover { background: #0f3460; }
+    .level-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
 
     .loading {
       text-align: center;
@@ -764,6 +795,17 @@
 
     <!-- Results -->
     <div class="results-area" id="results-area">
+      <div class="level-selector">
+        <span class="level-label">Level</span>
+        <button class="level-btn active" data-level="1">1</button>
+        <button class="level-btn" data-level="5">5</button>
+        <button class="level-btn" data-level="10">10</button>
+        <button class="level-btn" data-level="15">15</button>
+        <button class="level-btn" data-level="20">20</button>
+        <button class="level-btn" data-level="25">25</button>
+        <button class="level-btn" data-level="30">30</button>
+      </div>
+
       <!-- Core Matchup: Offlaner vs Carry -->
       <div class="matchup-section">
         <h2 class="section-title">Core Matchup <span class="section-subtitle">Offlaner vs Carry</span></h2>
@@ -783,8 +825,6 @@
   <script src="resources/heroes.js"></script>
   <script src="resources/meta.js"></script>
   <script src="resources/hero-stats.js"></script>
-  <script src="resources/hero-abilities.js"></script>
-  <script src="resources/abilities.js"></script>
   <script>
     const CDN = 'https://cdn.cloudflare.steamstatic.com';
     let heroes = [];
@@ -963,45 +1003,33 @@
       if (e.key === 'Escape') closePicker();
     });
 
-    // Spell helpers
-    function getHeroSpells(hero) {
-      const abilityIds = HERO_ABILITIES[hero.name] || [];
-      return abilityIds
-        .map(id => ABILITIES[id])
-        .filter(ab => ab && ab.dname);
-    }
+    // Stat comparison
+    const STATS = [
+      { key: 'hp', label: 'HP' },
+      { key: 'mana', label: 'Mana' },
+      { key: 'armor', label: 'Armor' },
+      { key: 'mr', label: 'Magic Res' },
+      { key: 'dmg', label: 'Damage' },
+      { key: 'hpregen', label: 'HP Regen' },
+      { key: 'manaregen', label: 'Mana Regen' },
+      { key: 'ms', label: 'Move Speed' },
+      { key: 'atkfreq', label: 'Atk/Sec' },
+      { key: 'range', label: 'Range' },
+    ];
 
-    function formatCdMc(values) {
-      if (!values) return null;
-      if (Array.isArray(values)) return values.join('/');
-      return String(values);
-    }
+    let selectedLevel = 1;
 
-    function renderSpellCard(spell) {
-      const cd = formatCdMc(spell.cd);
-      const mc = formatCdMc(spell.mc);
-      const dmg = formatCdMc(spell.dmg);
-      const imgSrc = spell.img ? CDN + spell.img : '';
-      const imgTag = imgSrc ? `<img src="${imgSrc}" alt="${spell.dname}" loading="lazy">` : '';
-      const dmgType = spell.dmg_type || '';
-      const dmgTypeCls = dmgType ? 'dmg-type-' + dmgType.toLowerCase() : '';
-
-      return `
-        <div class="spell-card">
-          ${imgTag}
-          <div class="spell-info">
-            <div class="spell-name">${spell.dname}</div>
-            <div class="spell-meta">
-              ${dmg ? `<span class="dmg">Dmg: ${dmg}</span>` : ''}
-              ${dmgType ? `<span class="${dmgTypeCls}">${dmgType}</span>` : ''}
-              ${cd ? `<span class="cd">CD: ${cd}</span>` : ''}
-              ${mc ? `<span class="mc">Mana: ${mc}</span>` : ''}
-            </div>
-            ${spell.desc ? `<div class="spell-desc">${spell.desc}</div>` : ''}
-          </div>
-        </div>
-      `;
-    }
+    // Level button listeners
+    document.querySelectorAll('.level-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedLevel = parseInt(btn.dataset.level);
+        if (document.getElementById('results-area').classList.contains('visible')) {
+          runAnalysis();
+        }
+      });
+    });
 
     function renderMatchupHeader(hero, side) {
       const attrLabels = { str: 'Strength', agi: 'Agility', int: 'Intelligence', all: 'Universal' };
@@ -1016,21 +1044,39 @@
       `;
     }
 
-    function renderSpellsRow(leftHero, rightHero) {
-      const leftSpells = getHeroSpells(leftHero);
-      const rightSpells = getHeroSpells(rightHero);
+    function renderMatchupComparison(leftHero, rightHero, level) {
+      const statRows = STATS.map(stat => {
+        const leftVal = calcStat(leftHero, stat.key, level);
+        const rightVal = calcStat(rightHero, stat.key, level);
+        const maxVal = Math.max(leftVal, rightVal);
+        const leftPct = maxVal > 0 ? (leftVal / maxVal) * 100 : 0;
+        const rightPct = maxVal > 0 ? (rightVal / maxVal) * 100 : 0;
+        const leftWins = leftVal > rightVal;
+        const rightWins = rightVal > leftVal;
+
+        return `
+          <div class="stat-row">
+            <div class="stat-cell left${leftWins ? ' winner' : ''}">
+              <div class="stat-bar" style="width: ${leftPct}%"></div>
+              <span class="stat-value">${formatStat(leftVal, stat.key)}</span>
+            </div>
+            <div class="stat-label">${stat.label}</div>
+            <div class="stat-cell right${rightWins ? ' winner' : ''}">
+              <div class="stat-bar" style="width: ${rightPct}%"></div>
+              <span class="stat-value">${formatStat(rightVal, stat.key)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
 
       return `
-        <div class="matchup-row-left">
-          <div class="spells-grid">
-            ${leftSpells.map(renderSpellCard).join('')}
+        <div class="matchup-table">
+          <div class="matchup-row">
+            ${renderMatchupHeader(leftHero, 'left')}
+            <div class="matchup-row-label matchup-header-label">VS</div>
+            ${renderMatchupHeader(rightHero, 'right')}
           </div>
-        </div>
-        <div class="matchup-row-label">Spells</div>
-        <div class="matchup-row-right">
-          <div class="spells-grid">
-            ${rightSpells.map(renderSpellCard).join('')}
-          </div>
+          ${statRows}
         </div>
       `;
     }
@@ -1041,22 +1087,14 @@
     function runAnalysis() {
       document.getElementById('results-area').classList.add('visible');
 
-      const offlaner = slots.offlaner;
-      const carry = slots.carry;
+      if (slots.offlaner && slots.carry) {
+        document.getElementById('core-matchup').innerHTML =
+          renderMatchupComparison(slots.offlaner, slots.carry, selectedLevel);
+      }
 
-      if (offlaner && carry) {
-        document.getElementById('core-matchup').innerHTML = `
-          <div class="matchup-table">
-            <div class="matchup-row">
-              ${renderMatchupHeader(offlaner, 'left')}
-              <div class="matchup-row-label matchup-header-label">VS</div>
-              ${renderMatchupHeader(carry, 'right')}
-            </div>
-            <div class="matchup-row">
-              ${renderSpellsRow(offlaner, carry)}
-            </div>
-          </div>
-        `;
+      if (slots.pos4 && slots.pos5) {
+        document.getElementById('support-matchup').innerHTML =
+          renderMatchupComparison(slots.pos4, slots.pos5, selectedLevel);
       }
     }
 
