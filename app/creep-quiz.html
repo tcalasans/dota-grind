@@ -378,11 +378,22 @@
 
     .results-total {
       font-size: 1.1rem;
-      margin-bottom: 24px;
+      margin-bottom: 8px;
       color: #ccc;
     }
 
     .results-total strong {
+      color: #e94560;
+      font-size: 1.4rem;
+    }
+
+    .results-time {
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+      color: #ccc;
+    }
+
+    .results-time strong {
       color: #e94560;
       font-size: 1.4rem;
     }
@@ -409,6 +420,18 @@
       .question-text { font-size: 0.95rem; }
     }
   </style>
+  <!-- Paste this right before your closing head tag -->
+  <script type="text/javascript">
+    (function (f, b) { if (!b.__SV) { var e, g, i, h; window.mixpanel = b; b._i = []; b.init = function (e, f, c) { function g(a, d) { var b = d.split("."); 2 == b.length && ((a = a[b[0]]), (d = b[1])); a[d] = function () { a.push([d].concat(Array.prototype.slice.call(arguments, 0))); }; } var a = b; "undefined" !== typeof c ? (a = b[c] = []) : (c = "mixpanel"); a.people = a.people || []; a.toString = function (a) { var d = "mixpanel"; "mixpanel" !== c && (d += "." + c); a || (d += " (stub)"); return d; }; a.people.toString = function () { return a.toString(1) + ".people (stub)"; }; i = "disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split( " "); for (h = 0; h < i.length; h++) g(a, i[h]); var j = "set set_once union unset remove delete".split(" "); a.get_group = function () { function b(c) { d[c] = function () { call2_args = arguments; call2 = [c].concat(Array.prototype.slice.call(call2_args, 0)); a.push([e, call2]); }; } for ( var d = {}, e = ["get_group"].concat( Array.prototype.slice.call(arguments, 0)), c = 0; c < j.length; c++) b(j[c]); return d; }; b._i.push([e, f, c]); }; b.__SV = 1.2; e = f.createElement("script"); e.type = "text/javascript"; e.async = !0; e.src = "undefined" !== typeof MIXPANEL_CUSTOM_LIB_URL ? MIXPANEL_CUSTOM_LIB_URL : "file:" === f.location.protocol && "//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//) ? "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js" : "//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"; g = f.getElementsByTagName("script")[0]; g.parentNode.insertBefore(e, g); } })(document, window.mixpanel || []);
+
+    // Create an instance of the Mixpanel object
+    mixpanel.init("d2037635eec79523b53dc04570a01fd9", {
+        autocapture: true,
+        track_pageview: true,
+        record_sessions_percent: 100, //records 100% of all sessions
+        record_heatmap_data: true,
+    });
+  </script>
 </head>
 <body>
   <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
@@ -490,6 +513,10 @@
           <div class="hud-label">Score</div>
           <div class="hud-value accent" id="hud-score">0</div>
         </div>
+        <div class="hud-item">
+          <div class="hud-label">Time</div>
+          <div class="hud-value" id="hud-timer">0:00</div>
+        </div>
       </div>
 
       <div class="game-area">
@@ -509,6 +536,9 @@
         <div class="results-comment" id="results-comment"></div>
         <div class="results-total">
           Score: <strong id="results-total">0</strong> / 10
+        </div>
+        <div class="results-time">
+          Time: <strong id="results-time">0s</strong>
         </div>
         <button class="btn-replay" id="btn-replay">Play Again</button>
       </div>
@@ -533,6 +563,8 @@
     let currentQuestion = null;
     let feedbackTimeout = null;
     let usedCombos = [];
+    let startTime = 0;
+    let timerInterval = null;
 
     // ── DOM ────────────────────────────────────────────────────────────
     const $pregame = document.getElementById('pregame-screen');
@@ -544,6 +576,7 @@
     const $mapImg = document.getElementById('map-img');
     const $answerButtons = document.getElementById('answer-buttons');
     const $feedback = document.getElementById('feedback-text');
+    const $hudTimer = document.getElementById('hud-timer');
 
     // ── Screen management ─────────────────────────────────────────────
     function showScreen(screen) {
@@ -608,13 +641,26 @@
       };
     }
 
+    // ── Timer ────────────────────────────────────────────────────────
+    function updateTimer() {
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      const m = Math.floor(elapsed / 60);
+      const s = elapsed % 60;
+      $hudTimer.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
     // ── Game logic ────────────────────────────────────────────────────
     function startGame() {
       round = 0;
       score = 0;
       usedCombos = [];
       $hudScore.textContent = '0';
+      startTime = Date.now();
+      $hudTimer.textContent = '0:00';
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
       showScreen($game);
+      mixpanel.track('Creep Quiz Started');
       nextRound();
     }
 
@@ -687,7 +733,15 @@
     }
 
     function showResults() {
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
       const pct = Math.round((score / TOTAL_ROUNDS) * 100);
+      const elapsedMs = Date.now() - startTime;
+      const elapsedSec = Math.round(elapsedMs / 1000);
+      const mins = Math.floor(elapsedSec / 60);
+      const secs = elapsedSec % 60;
+      const timeStr = mins > 0
+        ? mins + 'm ' + secs + 's'
+        : secs + 's';
 
       let grade, comment;
       if (pct >= 90) { grade = 'S'; comment = 'Immortal-tier creep knowledge!'; }
@@ -700,6 +754,15 @@
       document.getElementById('results-grade').textContent = grade;
       document.getElementById('results-comment').textContent = comment;
       document.getElementById('results-total').textContent = score;
+      document.getElementById('results-time').textContent = timeStr;
+
+      mixpanel.track('Creep Quiz Completed', {
+        'score': score,
+        'total_rounds': TOTAL_ROUNDS,
+        'percentage': pct,
+        'grade': grade,
+        'time_seconds': elapsedSec
+      });
 
       showScreen($results);
     }
