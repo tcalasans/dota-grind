@@ -28,7 +28,7 @@ const DIRE = {
         "3": 29 // wave meet
     },
     "midlane": {
-        "1": 8, // first point
+        "1": 7, // first point
         "2": 15, // 2nd point
         "3": 19 // wave meet
     }
