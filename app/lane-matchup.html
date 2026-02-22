@@ -621,6 +621,18 @@
       background: rgba(233, 69, 96, 0.15);
     }
 
+    .stat-tier {
+      font-size: 0.65rem;
+      font-weight: 400;
+      margin-left: 4px;
+      opacity: 0.7;
+    }
+
+    .stat-tier.high { color: #27ae60; }
+    .stat-tier.med-high { color: #f39c12; }
+    .stat-tier.med-low { color: #e67e22; }
+    .stat-tier.low { color: #c0392b; }
+
     .stat-label {
       display: flex;
       align-items: center;
@@ -1044,7 +1056,25 @@
       `;
     }
 
+    function getPercentileTier(value, allValues) {
+      const sorted = [...allValues].sort((a, b) => a - b);
+      const n = sorted.length;
+      const p25 = sorted[Math.floor(n * 0.25)];
+      const p50 = sorted[Math.floor(n * 0.50)];
+      const p75 = sorted[Math.floor(n * 0.75)];
+      if (value >= p75) return { label: 'high', cls: 'high' };
+      if (value >= p50) return { label: 'med-high', cls: 'med-high' };
+      if (value >= p25) return { label: 'med-low', cls: 'med-low' };
+      return { label: 'low', cls: 'low' };
+    }
+
     function renderMatchupComparison(leftHero, rightHero, level) {
+      // Pre-compute all hero values per stat for percentile ranking
+      const allStatValues = {};
+      for (const stat of STATS) {
+        allStatValues[stat.key] = heroes.map(h => calcStat(h, stat.key, level));
+      }
+
       const statRows = STATS.map(stat => {
         const leftVal = calcStat(leftHero, stat.key, level);
         const rightVal = calcStat(rightHero, stat.key, level);
@@ -1053,17 +1083,19 @@
         const rightPct = maxVal > 0 ? (rightVal / maxVal) * 100 : 0;
         const leftWins = leftVal > rightVal;
         const rightWins = rightVal > leftVal;
+        const leftTier = getPercentileTier(leftVal, allStatValues[stat.key]);
+        const rightTier = getPercentileTier(rightVal, allStatValues[stat.key]);
 
         return `
           <div class="stat-row">
             <div class="stat-cell left${leftWins ? ' winner' : ''}">
               <div class="stat-bar" style="width: ${leftPct}%"></div>
-              <span class="stat-value">${formatStat(leftVal, stat.key)}</span>
+              <span class="stat-value">${formatStat(leftVal, stat.key)} <span class="stat-tier ${leftTier.cls}">(${leftTier.label})</span></span>
             </div>
             <div class="stat-label">${stat.label}</div>
             <div class="stat-cell right${rightWins ? ' winner' : ''}">
               <div class="stat-bar" style="width: ${rightPct}%"></div>
-              <span class="stat-value">${formatStat(rightVal, stat.key)}</span>
+              <span class="stat-value">${formatStat(rightVal, stat.key)} <span class="stat-tier ${rightTier.cls}">(${rightTier.label})</span></span>
             </div>
           </div>
         `;
