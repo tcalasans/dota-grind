@@ -396,7 +396,7 @@
     function loadItems() {
       items = Object.entries(ITEMS)
         .map(([key, item]) => ({ ...item, key }))
-        .filter(item => item.dname && item.cost !== null)
+        .filter(item => item.dname && item.cost !== null && item.cost > 0 && !item.tier && item.key !== 'courier' && item.key !== 'flying_courier')
         .sort((a, b) => a.dname.localeCompare(b.dname));
       renderGrid(items);
     }
