@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Creep Wave Timer - Dota 2</title>
+  <link rel="stylesheet" href="resources/sidebar.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,111 +14,6 @@
       color: #e0e0e0;
       min-height: 100vh;
       display: flex;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      width: 220px;
-      min-height: 100vh;
-      background: #0f1a2e;
-      border-right: 1px solid #0f3460;
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 200;
-      transition: transform 0.3s;
-    }
-
-    .sidebar-brand {
-      padding: 20px 16px;
-      border-bottom: 2px solid #e94560;
-      text-align: center;
-    }
-
-    .sidebar-brand h2 {
-      font-size: 1.1rem;
-      color: #e94560;
-      letter-spacing: 1px;
-    }
-
-    .sidebar-brand span {
-      font-size: 0.65rem;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-
-    .sidebar nav {
-      padding: 12px 0;
-      flex: 1;
-    }
-
-    .sidebar nav a {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
-      color: #888;
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-      border-left: 3px solid transparent;
-    }
-
-    .sidebar nav a:hover {
-      color: #e0e0e0;
-      background: rgba(233, 69, 96, 0.05);
-    }
-
-    .sidebar nav a.active {
-      color: #e94560;
-      background: rgba(233, 69, 96, 0.1);
-      border-left-color: #e94560;
-    }
-
-    .sidebar nav a .nav-icon {
-      width: 20px;
-      text-align: center;
-      font-size: 1rem;
-    }
-
-    .main-content {
-      flex: 1;
-      margin-left: 220px;
-    }
-
-    .sidebar-toggle {
-      display: none;
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 300;
-      background: #0f1a2e;
-      border: 1px solid #0f3460;
-      color: #e0e0e0;
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1.2rem;
-      line-height: 1;
-    }
-
-    .sidebar-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 199;
-    }
-    .sidebar-overlay.open { display: block; }
-
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
-      .sidebar-toggle { display: block; }
-      .main-content { margin-left: 0; }
     }
 
     header {
@@ -434,42 +330,6 @@
   </script>
 </head>
 <body>
-  <button class="sidebar-toggle" id="sidebar-toggle">&#9776;</button>
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <h2>DOTA 2</h2>
-      <span>Analysis</span>
-    </div>
-    <nav>
-      <a href="index.html">
-        <span class="nav-icon">&#9813;</span>
-        Hero Stats
-      </a>
-      <a href="compare.html">
-        <span class="nav-icon">&#9878;</span>
-        Hero Comparison
-      </a>
-      <a href="lane-matchup.html">
-        <span class="nav-icon">&#9876;</span>
-        Lane Matchup
-      </a>
-      <a href="hero-trivia.html">
-        <span class="nav-icon">&#9678;</span>
-        Hero Trivia
-      </a>
-      <a href="simulator.html">
-        <span class="nav-icon">&#9654;</span>
-        Simulator
-      </a>
-      <a href="creep-quiz.html" class="active">
-        <span class="nav-icon">&#9820;</span>
-        Creep Wave Timer
-      </a>
-    </nav>
-  </aside>
-
   <div class="main-content">
     <header>
       <h1>Creep Wave Quiz</h1>
@@ -784,15 +644,7 @@
       }
     });
 
-    // Sidebar toggle
-    document.getElementById('sidebar-toggle').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-      document.getElementById('sidebar-overlay').classList.toggle('open');
-    });
-    document.getElementById('sidebar-overlay').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.remove('open');
-      document.getElementById('sidebar-overlay').classList.remove('open');
-    });
   </script>
+  <script src="resources/sidebar.js"></script>
 </body>
 </html>
