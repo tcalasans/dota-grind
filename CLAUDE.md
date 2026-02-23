@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Dota 2 hero analysis dashboard — a static site with no build step, no bundler, and no dependencies. Each page is a self-contained HTML file with inline CSS and inline JavaScript.
+Dota 2's Best Knolwedge Base — a static site with no build step, no bundler, and no dependencies. Each page is a self-contained HTML file with inline CSS and inline JavaScript.
 
 ## Development
 

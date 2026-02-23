@@ -29,7 +29,7 @@
     '<aside class="sidebar" id="sidebar">' +
       '<div class="sidebar-brand">' +
         '<h2>DOTA 2</h2>' +
-        '<span>Analysis</span>' +
+        '<span>Best Knowledge Base</span>' +
       '</div>' +
       '<nav>' + navHtml + '</nav>' +
     '</aside>';
