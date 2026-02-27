@@ -24,7 +24,11 @@
       "Bash(npm run:*)",
       "Bash(npx next:*)",
       "Bash(git status:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:www.dota2.com)",
+      "Bash(node:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
