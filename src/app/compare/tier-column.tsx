@@ -1,12 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { Hero, StatDimension } from '@/types/hero';
-import { heroImageUrl } from '@/lib/image-urls';
+import { HeroV2, StatDimension } from '@/types/hero-v2';
+import { heroImageFromName } from '@/lib/image-urls';
 import { formatStat } from '@/lib/hero-stats';
 
 interface TierEntry {
-  hero: Hero;
+  hero: HeroV2;
   value: number;
 }
 
@@ -38,15 +38,15 @@ export default function TierColumn({ tierIndex, entries, dim }: TierColumnProps)
             className="flex items-center gap-2 px-2 py-1.5 bg-primary rounded transition-colors duration-150 hover:bg-border"
           >
             <Image
-              src={heroImageUrl(e.hero.img)}
-              alt={e.hero.localized_name}
+              src={heroImageFromName(e.hero.name)}
+              alt={e.hero.name_loc}
               width={40}
               height={22}
               className="object-cover rounded-sm shrink-0"
               loading="lazy"
             />
             <span className="flex-1 whitespace-nowrap overflow-hidden text-ellipsis text-[0.8rem]">
-              {e.hero.localized_name}
+              {e.hero.name_loc}
             </span>
             <span className="font-semibold text-accent whitespace-nowrap text-[0.8rem]">
               {formatStat(e.value, dim)}

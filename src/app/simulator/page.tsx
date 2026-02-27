@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Hero } from '@/types/hero';
-import { HEROES } from '@/data/heroes';
+import { HeroV2 } from '@/types/hero-v2';
+import { HEROES_V2 } from '@/data/heroes-v2';
 import { ITEMS } from '@/data/items';
-import { heroImageUrl } from '@/lib/image-urls';
+import { heroImageFromName } from '@/lib/image-urls';
 import { trackEvent } from '@/lib/mixpanel';
 import HeroPicker from '@/components/hero-picker';
 import BootSelector, { BootItem } from './boot-selector';
@@ -22,7 +22,7 @@ function SimulatorContent() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [screen, setScreen] = useState<'pregame' | 'game'>('pregame');
-  const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
+  const [selectedHero, setSelectedHero] = useState<HeroV2 | null>(null);
   const [selectedBoot, setSelectedBoot] = useState<BootItem | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -49,9 +49,9 @@ function SimulatorContent() {
     trackEvent('open page', { page: 'Simulator' });
     const heroParam = searchParams.get('hero');
     if (heroParam) {
-      const hero = HEROES.find(
+      const hero = HEROES_V2.find(
         (h) =>
-          h.localized_name.toLowerCase() === heroParam.toLowerCase() ||
+          h.name_loc.toLowerCase() === heroParam.toLowerCase() ||
           h.name === heroParam ||
           h.name === 'npc_dota_hero_' + heroParam
       );
@@ -66,18 +66,18 @@ function SimulatorContent() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const syncURL = (hero: Hero | null, boot: BootItem | null) => {
+  const syncURL = (hero: HeroV2 | null, boot: BootItem | null) => {
     const params = new URLSearchParams();
     if (hero) {
-      params.set('hero', hero.localized_name);
+      params.set('hero', hero.name_loc);
       if (boot) params.set('boots', boot.key);
     }
     const qs = params.toString();
     router.replace(qs ? `?${qs}` : '/simulator', { scroll: false });
   };
 
-  const getBootMoveSpeed = (hero: Hero) => {
-    return hero.move_speed + (selectedBoot?.ms || 0);
+  const getBootMoveSpeed = (hero: HeroV2) => {
+    return hero.movement_speed + (selectedBoot?.ms || 0);
   };
 
   const startSimulation = () => {
@@ -124,13 +124,13 @@ function SimulatorContent() {
               {selectedHero ? (
                 <>
                   <Image
-                    src={heroImageUrl(selectedHero.img)}
-                    alt={selectedHero.localized_name}
+                    src={heroImageFromName(selectedHero.name)}
+                    alt={selectedHero.name_loc}
                     width={180}
                     height={101}
                     className="rounded-lg border-2 border-border mb-3"
                   />
-                  <span className="text-[1.1rem] font-semibold">{selectedHero.localized_name}</span>
+                  <span className="text-[1.1rem] font-semibold">{selectedHero.name_loc}</span>
                   <span className="text-[0.8rem] text-text-muted mt-1">
                     Move Speed: {moveSpeed} &nbsp;|&nbsp; Turn Rate: {turnRate}
                   </span>
@@ -171,7 +171,7 @@ function SimulatorContent() {
       {screen === 'game' && (
         <div className="flex-1 flex flex-col">
           <div className="bg-gradient-to-br from-header to-header-end border-b-2 border-accent px-5 py-3 flex items-center gap-6 z-10 flex-wrap max-md:gap-3 max-md:px-3.5">
-            <span className="text-[1.1rem] text-accent font-semibold">{selectedHero?.localized_name}</span>
+            <span className="text-[1.1rem] text-accent font-semibold">{selectedHero?.name_loc}</span>
             <span className="text-[0.85rem] text-text-muted">Move Speed: <span className="text-text-primary font-semibold">{moveSpeed}</span></span>
             <span className="text-[0.85rem] text-text-muted">Turn Rate: <span className="text-text-primary font-semibold">{turnRate}</span></span>
             <span className="text-[0.85rem] text-text-muted">Boots: <span className="text-text-primary font-semibold">{selectedBoot?.dname || 'None'}</span></span>

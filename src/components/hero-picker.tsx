@@ -1,35 +1,35 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Hero } from '@/types/hero';
-import { HEROES } from '@/data/heroes';
+import { HeroV2 } from '@/types/hero-v2';
+import { HEROES_V2 } from '@/data/heroes-v2';
 import HeroCard from './hero-card';
 
 const ATTR_FILTERS = [
-  { value: 'all-heroes', label: 'All' },
-  { value: 'str', label: 'STR', colorClass: 'bg-attr-str border-attr-str' },
-  { value: 'agi', label: 'AGI', colorClass: 'bg-attr-agi border-attr-agi' },
-  { value: 'int', label: 'INT', colorClass: 'bg-attr-int border-attr-int' },
-  { value: 'all', label: 'UNI', colorClass: 'bg-attr-uni border-attr-uni' },
+  { value: -1 as number, label: 'All' },
+  { value: 0, label: 'STR', colorClass: 'bg-attr-str border-attr-str' },
+  { value: 1, label: 'AGI', colorClass: 'bg-attr-agi border-attr-agi' },
+  { value: 2, label: 'INT', colorClass: 'bg-attr-int border-attr-int' },
+  { value: 3, label: 'UNI', colorClass: 'bg-attr-uni border-attr-uni' },
 ];
 
 interface HeroPickerProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (hero: Hero) => void;
+  onSelect: (hero: HeroV2) => void;
   title?: string;
   metaHeroes?: string[];
 }
 
 export default function HeroPicker({ open, onClose, onSelect, title = 'Select Hero', metaHeroes }: HeroPickerProps) {
   const [search, setSearch] = useState('');
-  const [attrFilter, setAttrFilter] = useState('all-heroes');
+  const [attrFilter, setAttrFilter] = useState(-1);
   const [metaFilter, setMetaFilter] = useState(false);
 
   useEffect(() => {
     if (open) {
       setSearch('');
-      setAttrFilter('all-heroes');
+      setAttrFilter(-1);
       setMetaFilter(false);
     }
   }, [open]);
@@ -47,15 +47,15 @@ export default function HeroPicker({ open, onClose, onSelect, title = 'Select He
 
   const metaList = metaFilter && metaHeroes ? metaHeroes.slice(0, 6) : null;
 
-  let filtered = HEROES.filter((h) => {
-    const matchName = h.localized_name.toLowerCase().includes(search.toLowerCase());
-    const matchAttr = attrFilter === 'all-heroes' || h.primary_attr === attrFilter;
-    const matchMeta = !metaList || metaList.includes(h.localized_name);
+  let filtered = HEROES_V2.filter((h) => {
+    const matchName = h.name_loc.toLowerCase().includes(search.toLowerCase());
+    const matchAttr = attrFilter === -1 || h.primary_attr === attrFilter;
+    const matchMeta = !metaList || metaList.includes(h.name_loc);
     return matchName && matchAttr && matchMeta;
   });
 
   if (metaList) {
-    filtered.sort((a, b) => metaList.indexOf(a.localized_name) - metaList.indexOf(b.localized_name));
+    filtered.sort((a, b) => metaList.indexOf(a.name_loc) - metaList.indexOf(b.name_loc));
   }
 
   return (

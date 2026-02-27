@@ -1,13 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { Hero } from '@/types/hero';
-import { heroImageUrl } from '@/lib/image-urls';
+import { HeroV2 } from '@/types/hero-v2';
+import { heroImageFromName } from '@/lib/image-urls';
 import AttributeIndicator from './attribute-indicator';
 
 interface HeroCardProps {
-  hero: Hero;
-  onClick?: (hero: Hero) => void;
+  hero: HeroV2;
+  onClick?: (hero: HeroV2) => void;
 }
 
 export default function HeroCard({ hero, onClick }: HeroCardProps) {
@@ -17,8 +17,8 @@ export default function HeroCard({ hero, onClick }: HeroCardProps) {
       onClick={() => onClick?.(hero)}
     >
       <Image
-        src={heroImageUrl(hero.img)}
-        alt={hero.localized_name}
+        src={heroImageFromName(hero.name)}
+        alt={hero.name_loc}
         width={256}
         height={144}
         className="w-full block aspect-video object-cover"
@@ -29,7 +29,7 @@ export default function HeroCard({ hero, onClick }: HeroCardProps) {
         className="absolute top-1 right-1"
       />
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 to-transparent pt-4 px-1.5 pb-1 text-[0.7rem] text-center font-semibold uppercase tracking-wide">
-        {hero.localized_name}
+        {hero.name_loc}
       </div>
     </div>
   );

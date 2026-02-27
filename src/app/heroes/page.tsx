@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Hero } from '@/types/hero';
-import { HEROES } from '@/data/heroes';
+import { HeroV2 } from '@/types/hero-v2';
+import { HEROES_V2 } from '@/data/heroes-v2';
 import { trackEvent } from '@/lib/mixpanel';
 import PageHeader from '@/components/page-header';
 import FilterBar from '@/components/filter-bar';
@@ -11,24 +11,24 @@ import HeroDetailModal from './hero-detail-modal';
 
 const FILTERS = [
   { value: 'all-heroes', label: 'All' },
-  { value: 'str', label: 'Strength', colorClass: 'bg-attr-str border-attr-str' },
-  { value: 'agi', label: 'Agility', colorClass: 'bg-attr-agi border-attr-agi' },
-  { value: 'int', label: 'Intelligence', colorClass: 'bg-attr-int border-attr-int' },
-  { value: 'all', label: 'Universal', colorClass: 'bg-attr-uni border-attr-uni' },
+  { value: '0', label: 'Strength', colorClass: 'bg-attr-str border-attr-str' },
+  { value: '1', label: 'Agility', colorClass: 'bg-attr-agi border-attr-agi' },
+  { value: '2', label: 'Intelligence', colorClass: 'bg-attr-int border-attr-int' },
+  { value: '3', label: 'Universal', colorClass: 'bg-attr-uni border-attr-uni' },
 ];
 
 export default function HeroesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all-heroes');
-  const [selectedHero, setSelectedHero] = useState<Hero | null>(null);
+  const [selectedHero, setSelectedHero] = useState<HeroV2 | null>(null);
 
   useEffect(() => {
     trackEvent('open page', { page: 'Hero Stats' });
   }, []);
 
-  const filtered = HEROES.filter((h) => {
-    const matchName = h.localized_name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchAttr = activeFilter === 'all-heroes' || h.primary_attr === activeFilter;
+  const filtered = HEROES_V2.filter((h) => {
+    const matchName = h.name_loc.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchAttr = activeFilter === 'all-heroes' || h.primary_attr === Number(activeFilter);
     return matchName && matchAttr;
   });
 

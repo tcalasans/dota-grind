@@ -1,4 +1,4 @@
-import { Hero, HeroStats, StatDimension } from '@/types/hero';
+import { HeroV2, HeroStats, StatDimension } from '@/types/hero-v2';
 
 export const XP_PER_MINUTE = 360;
 export const LEVEL_XP = [0, 230, 600, 1080, 1660, 2260, 2980, 3820, 4780, 5860, 7060];
@@ -13,56 +13,59 @@ export function getLevelAtMinute(minute: number): number {
   return Math.min(level, 11);
 }
 
-export function getAttributes(h: Hero, level: number) {
+export function getAttributes(h: HeroV2, level: number) {
   const gained = level - 1;
   return {
-    str: h.base_str + h.str_gain * gained,
-    agi: h.base_agi + h.agi_gain * gained,
-    int: h.base_int + h.int_gain * gained,
+    str: h.str_base + h.str_gain * gained,
+    agi: h.agi_base + h.agi_gain * gained,
+    int: h.int_base + h.int_gain * gained,
   };
 }
 
-export function getPrimaryBonus(h: Hero, str: number, agi: number, int: number): number {
-  if (h.primary_attr === 'str') return str;
-  if (h.primary_attr === 'agi') return agi;
-  if (h.primary_attr === 'int') return int;
-  return (str + agi + int) * 0.7; // universal
+export function getPrimaryBonus(h: HeroV2, strGained: number, agiGained: number, intGained: number): number {
+  if (h.primary_attr === 0) return strGained;
+  if (h.primary_attr === 1) return agiGained;
+  if (h.primary_attr === 2) return intGained;
+  return (strGained + agiGained + intGained) * 0.7; // universal
 }
 
-export function calcHP(h: Hero, str: number): number {
-  return h.base_health + str * 22;
+export function calcHP(h: HeroV2, str: number): number {
+  return h.max_health + (str - h.str_base) * 22;
 }
 
-export function calcMana(h: Hero, int: number): number {
-  return h.base_mana + int * 12;
+export function calcMana(h: HeroV2, int: number): number {
+  return h.max_mana + (int - h.int_base) * 12;
 }
 
-export function calcArmor(h: Hero, agi: number): number {
-  return h.base_armor + agi * 0.167;
+export function calcArmor(h: HeroV2, agi: number): number {
+  return h.armor + (agi - h.agi_base) * 0.167;
 }
 
-export function calcMR(h: Hero, int: number): number {
-  return h.base_mr + int * 0.1;
+export function calcMR(h: HeroV2, int: number): number {
+  return h.magic_resistance + (int - h.int_base) * 0.1;
 }
 
-export function calcHPRegen(h: Hero, str: number): number {
-  return (h.base_health_regen ?? 0) + str * 0.1;
+export function calcHPRegen(h: HeroV2, str: number): number {
+  return h.health_regen + (str - h.str_base) * 0.1;
 }
 
-export function calcManaRegen(h: Hero, int: number): number {
-  return (h.base_mana_regen ?? 0) + int * 0.05;
+export function calcManaRegen(h: HeroV2, int: number): number {
+  return h.mana_regen + (int - h.int_base) * 0.05;
 }
 
-export function calcDamage(h: Hero, str: number, agi: number, int: number): number {
-  const baseDmg = (h.base_attack_min + h.base_attack_max) / 2;
-  return baseDmg + getPrimaryBonus(h, str, agi, int);
+export function calcDamage(h: HeroV2, str: number, agi: number, int: number): number {
+  const baseDmg = (h.damage_min + h.damage_max) / 2;
+  const strGained = str - h.str_base;
+  const agiGained = agi - h.agi_base;
+  const intGained = int - h.int_base;
+  return baseDmg + getPrimaryBonus(h, strGained, agiGained, intGained);
 }
 
-export function calcAtkFreq(h: Hero, agi: number): number {
-  return (h.base_attack_time + agi) / (h.attack_rate * 100);
+export function calcAtkFreq(h: HeroV2, agi: number): number {
+  return (100 + agi) / (h.attack_rate * 100);
 }
 
-export function calcDPS(h: Hero, damage: number, agi: number): number {
+export function calcDPS(h: HeroV2, damage: number, agi: number): number {
   return damage * calcAtkFreq(h, agi);
 }
 
@@ -74,7 +77,7 @@ export function calcEHPMagic(hp: number, mr: number): number {
   return hp / (1 - mr / 100);
 }
 
-export function calcHeroStats(h: Hero, level: number): HeroStats {
+export function calcHeroStats(h: HeroV2, level: number): HeroStats {
   const { str, agi, int } = getAttributes(h, level);
   const hp = calcHP(h, str);
   const mana = calcMana(h, int);
@@ -90,7 +93,7 @@ export function calcHeroStats(h: Hero, level: number): HeroStats {
   return { str, agi, int, hp, mana, armor, mr, hpRegen, manaRegen, damage, dps, ehpPhys, ehpMagic, level };
 }
 
-export function calcStat(h: Hero, dim: StatDimension, level: number): number {
+export function calcStat(h: HeroV2, dim: StatDimension, level: number): number {
   const { str, agi, int } = getAttributes(h, level);
   switch (dim) {
     case 'hp': return calcHP(h, str);
@@ -100,7 +103,7 @@ export function calcStat(h: Hero, dim: StatDimension, level: number): number {
     case 'dmg': return calcDamage(h, str, agi, int);
     case 'hpregen': return calcHPRegen(h, str);
     case 'manaregen': return calcManaRegen(h, int);
-    case 'ms': return h.move_speed;
+    case 'ms': return h.movement_speed;
     case 'atkfreq': return calcAtkFreq(h, agi);
     case 'range': return h.attack_range;
   }

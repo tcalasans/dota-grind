@@ -1,29 +1,22 @@
 'use client';
 
 import Image from 'next/image';
-import { Hero, PrimaryAttr } from '@/types/hero';
-import { heroImageUrl } from '@/lib/image-urls';
+import { HeroV2, ATTR_LABELS, ATTACK_TYPE_LABELS, ROLE_NAMES } from '@/types/hero-v2';
+import { heroImageFromName } from '@/lib/image-urls';
 import { calcHeroStats } from '@/lib/hero-stats';
 import Modal from '@/components/modal';
 
-const attrLabel: Record<PrimaryAttr, string> = {
-  str: 'Strength',
-  agi: 'Agility',
-  int: 'Intelligence',
-  all: 'Universal',
-};
-
-const attrBadgeClass: Record<PrimaryAttr, string> = {
-  str: 'bg-attr-str',
-  agi: 'bg-attr-agi',
-  int: 'bg-attr-int',
-  all: 'bg-attr-uni',
+const attrBadgeClass: Record<number, string> = {
+  0: 'bg-attr-str',
+  1: 'bg-attr-agi',
+  2: 'bg-attr-int',
+  3: 'bg-attr-uni',
 };
 
 const LEVELS = [1, 5, 10, 15, 20, 25, 30];
 
 interface HeroDetailModalProps {
-  hero: Hero | null;
+  hero: HeroV2 | null;
   onClose: () => void;
 }
 
@@ -31,6 +24,9 @@ export default function HeroDetailModal({ hero, onClose }: HeroDetailModalProps)
   if (!hero) return null;
 
   const s1 = calcHeroStats(hero, 1);
+  const roles = hero.role_levels
+    .map((level, i) => (level > 0 ? ROLE_NAMES[i] : null))
+    .filter(Boolean);
 
   return (
     <Modal open={!!hero} onClose={onClose}>
@@ -38,24 +34,24 @@ export default function HeroDetailModal({ hero, onClose }: HeroDetailModalProps)
         {/* Header */}
         <div className="flex items-center gap-5 p-6 border-b border-border max-sm:flex-col max-sm:text-center">
           <Image
-            src={heroImageUrl(hero.img)}
-            alt={hero.localized_name}
+            src={heroImageFromName(hero.name)}
+            alt={hero.name_loc}
             width={180}
             height={101}
             className="rounded-lg"
           />
           <div>
-            <h2 className="text-[1.6rem] mb-1.5 font-bold">{hero.localized_name}</h2>
+            <h2 className="text-[1.6rem] mb-1.5 font-bold">{hero.name_loc}</h2>
             <span
               className={`inline-block px-3 py-0.5 rounded-xl text-[0.75rem] font-semibold uppercase tracking-wide text-white ${attrBadgeClass[hero.primary_attr]}`}
             >
-              {attrLabel[hero.primary_attr]}
+              {ATTR_LABELS[hero.primary_attr]}
             </span>
             <div className="text-[0.75rem] text-text-muted mt-0.5">
-              {hero.attack_type} | Range: {hero.attack_range}
+              {ATTACK_TYPE_LABELS[hero.attack_capability]} | Range: {hero.attack_range}
             </div>
             <div className="mt-2 flex gap-1.5 flex-wrap max-sm:justify-center">
-              {hero.roles.map((r) => (
+              {roles.map((r) => (
                 <span
                   key={r}
                   className="bg-primary px-2.5 py-0.5 rounded-[10px] text-[0.7rem] text-[#aaa]"
@@ -80,7 +76,7 @@ export default function HeroDetailModal({ hero, onClose }: HeroDetailModalProps)
               <StatItem label="Armor" value={s1.armor.toFixed(1)} />
               <StatItem label="Magic Res" value={`${s1.mr.toFixed(1)}%`} />
               <StatItem label="Damage" value={Math.round(s1.damage)} />
-              <StatItem label="Move Speed" value={hero.move_speed} />
+              <StatItem label="Move Speed" value={hero.movement_speed} />
               <StatItem label="HP Regen" value={s1.hpRegen.toFixed(1)} />
               <StatItem label="Mana Regen" value={s1.manaRegen.toFixed(2)} />
               <StatItem label="Attack Rate" value={hero.attack_rate} />
@@ -94,9 +90,9 @@ export default function HeroDetailModal({ hero, onClose }: HeroDetailModalProps)
               Attributes
             </h3>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2.5">
-              <StatItem label="Strength" value={`${hero.base_str} + ${hero.str_gain}`} valueClass="text-[#e74c3c]" />
-              <StatItem label="Agility" value={`${hero.base_agi} + ${hero.agi_gain}`} valueClass="text-[#2ecc71]" />
-              <StatItem label="Intelligence" value={`${hero.base_int} + ${hero.int_gain}`} valueClass="text-[#3498db]" />
+              <StatItem label="Strength" value={`${hero.str_base} + ${hero.str_gain}`} valueClass="text-[#e74c3c]" />
+              <StatItem label="Agility" value={`${hero.agi_base} + ${hero.agi_gain}`} valueClass="text-[#2ecc71]" />
+              <StatItem label="Intelligence" value={`${hero.int_base} + ${hero.int_gain}`} valueClass="text-[#3498db]" />
             </div>
           </div>
 

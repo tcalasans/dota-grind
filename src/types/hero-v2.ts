@@ -133,3 +133,46 @@ export interface HeroV2 {
   talents: HeroTalent[];
   facet_abilities: FacetAbilities[];
 }
+
+export interface HeroStats {
+  str: number;
+  agi: number;
+  int: number;
+  hp: number;
+  mana: number;
+  armor: number;
+  mr: number;
+  hpRegen: number;
+  manaRegen: number;
+  damage: number;
+  dps: number;
+  ehpPhys: number;
+  ehpMagic: number;
+  level: number;
+}
+
+export type StatDimension =
+  | 'hp'
+  | 'mana'
+  | 'armor'
+  | 'mr'
+  | 'dmg'
+  | 'hpregen'
+  | 'manaregen'
+  | 'ms'
+  | 'atkfreq'
+  | 'range';
+
+export const ROLE_NAMES = ['Carry', 'Support', 'Nuker', 'Disabler', 'Jungler', 'Durable', 'Escape', 'Pusher', 'Initiator'];
+
+export const ATTR_LABELS: Record<number, string> = {
+  0: 'Strength',
+  1: 'Agility',
+  2: 'Intelligence',
+  3: 'Universal',
+};
+
+export const ATTACK_TYPE_LABELS: Record<number, string> = {
+  1: 'Melee',
+  2: 'Ranged',
+};

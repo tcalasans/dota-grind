@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Hero } from '@/types/hero';
-import { HEROES } from '@/data/heroes';
+import { HeroV2 } from '@/types/hero-v2';
+import { HEROES_V2 } from '@/data/heroes-v2';
 import { META_CARRY, META_OFFLANER, META_SOFT_SUPPORT, META_HARD_SUPPORT } from '@/data/meta';
 import { trackEvent } from '@/lib/mixpanel';
 import PageHeader from '@/components/page-header';
@@ -25,7 +25,7 @@ function LaneMatchupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [slots, setSlots] = useState<Record<SlotId, Hero | null>>({
+  const [slots, setSlots] = useState<Record<SlotId, HeroV2 | null>>({
     offlaner: null,
     pos4: null,
     carry: null,
@@ -39,11 +39,11 @@ function LaneMatchupContent() {
   // Load from URL on mount
   useEffect(() => {
     trackEvent('open page', { page: 'Lane Matchup' });
-    const newSlots: Record<SlotId, Hero | null> = { offlaner: null, pos4: null, carry: null, pos5: null };
+    const newSlots: Record<SlotId, HeroV2 | null> = { offlaner: null, pos4: null, carry: null, pos5: null };
     for (const slot of Object.keys(newSlots) as SlotId[]) {
       const id = parseInt(searchParams.get(slot) || '');
       if (id) {
-        const hero = HEROES.find((h) => h.id === id);
+        const hero = HEROES_V2.find((h) => h.id === id);
         if (hero) newSlots[slot] = hero;
       }
     }
@@ -51,7 +51,7 @@ function LaneMatchupContent() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const syncURL = useCallback(
-    (newSlots: Record<SlotId, Hero | null>) => {
+    (newSlots: Record<SlotId, HeroV2 | null>) => {
       const params = new URLSearchParams();
       for (const [slot, hero] of Object.entries(newSlots)) {
         if (hero) params.set(slot, String(hero.id));
@@ -62,7 +62,7 @@ function LaneMatchupContent() {
     [router]
   );
 
-  const setSlot = (slotId: SlotId, hero: Hero | null) => {
+  const setSlot = (slotId: SlotId, hero: HeroV2 | null) => {
     const newSlots = { ...slots, [slotId]: hero };
     setSlots(newSlots);
     syncURL(newSlots);

@@ -28,7 +28,8 @@
       "Bash(git commit:*)",
       "WebFetch(domain:www.dota2.com)",
       "Bash(node:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(lsof:*)"
     ]
   }
 }

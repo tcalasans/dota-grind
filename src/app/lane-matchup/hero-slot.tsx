@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { Hero } from '@/types/hero';
-import { heroImageUrl } from '@/lib/image-urls';
+import { HeroV2 } from '@/types/hero-v2';
+import { heroImageFromName } from '@/lib/image-urls';
 
 const slotLabels: Record<string, string> = {
   offlaner: 'Offlaner (Pos 3)',
@@ -20,7 +20,7 @@ const slotRoleLabels: Record<string, string> = {
 
 interface HeroSlotProps {
   slotId: string;
-  hero: Hero | null;
+  hero: HeroV2 | null;
   onOpen: () => void;
   onClear: () => void;
 }
@@ -47,14 +47,14 @@ export default function HeroSlot({ slotId, hero, onOpen, onClear }: HeroSlotProp
     >
       <div className="flex items-center gap-3 p-2">
         <Image
-          src={heroImageUrl(hero.img)}
-          alt={hero.localized_name}
+          src={heroImageFromName(hero.name)}
+          alt={hero.name_loc}
           width={60}
           height={34}
           className="rounded object-cover"
         />
         <div className="flex-1">
-          <div className="font-semibold text-sm">{hero.localized_name}</div>
+          <div className="font-semibold text-sm">{hero.name_loc}</div>
           <div className="text-xs text-text-muted">{slotRoleLabels[slotId]}</div>
         </div>
         <button

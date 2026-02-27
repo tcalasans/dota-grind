@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { Hero, StatDimension, PrimaryAttr } from '@/types/hero';
-import { HEROES } from '@/data/heroes';
-import { heroImageUrl } from '@/lib/image-urls';
+import { HeroV2, StatDimension, ATTR_LABELS } from '@/types/hero-v2';
+import { HEROES_V2 } from '@/data/heroes-v2';
+import { heroImageFromName } from '@/lib/image-urls';
 import { calcStat, formatStat } from '@/lib/hero-stats';
 
 const STATS: { key: StatDimension; label: string }[] = [
@@ -19,13 +19,6 @@ const STATS: { key: StatDimension; label: string }[] = [
   { key: 'range', label: 'Range' },
 ];
 
-const attrLabels: Record<PrimaryAttr, string> = {
-  str: 'Strength',
-  agi: 'Agility',
-  int: 'Intelligence',
-  all: 'Universal',
-};
-
 function getPercentileTier(value: number, allValues: number[]) {
   const sorted = [...allValues].sort((a, b) => a - b);
   const n = sorted.length;
@@ -39,8 +32,8 @@ function getPercentileTier(value: number, allValues: number[]) {
 }
 
 interface MatchupComparisonProps {
-  leftHero: Hero;
-  rightHero: Hero;
+  leftHero: HeroV2;
+  rightHero: HeroV2;
   level: number;
   title: string;
   subtitle: string;
@@ -49,7 +42,7 @@ interface MatchupComparisonProps {
 export default function MatchupComparison({ leftHero, rightHero, level, title, subtitle }: MatchupComparisonProps) {
   const allStatValues: Record<string, number[]> = {};
   for (const stat of STATS) {
-    allStatValues[stat.key] = HEROES.map((h) => calcStat(h, stat.key, level));
+    allStatValues[stat.key] = HEROES_V2.map((h) => calcStat(h, stat.key, level));
   }
 
   return (
@@ -128,19 +121,19 @@ export default function MatchupComparison({ leftHero, rightHero, level, title, s
   );
 }
 
-function HeroHeader({ hero }: { hero: Hero }) {
+function HeroHeader({ hero }: { hero: HeroV2 }) {
   return (
     <div className="flex items-center gap-3 flex-1">
       <Image
-        src={heroImageUrl(hero.img)}
-        alt={hero.localized_name}
+        src={heroImageFromName(hero.name)}
+        alt={hero.name_loc}
         width={80}
         height={45}
         className="rounded object-cover"
       />
       <div>
-        <div className="font-semibold">{hero.localized_name}</div>
-        <div className="text-xs text-text-muted">{attrLabels[hero.primary_attr]}</div>
+        <div className="font-semibold">{hero.name_loc}</div>
+        <div className="text-xs text-text-muted">{ATTR_LABELS[hero.primary_attr]}</div>
       </div>
     </div>
   );

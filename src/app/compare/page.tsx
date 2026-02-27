@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { StatDimension } from '@/types/hero';
-import { HEROES } from '@/data/heroes';
+import { StatDimension } from '@/types/hero-v2';
+import { HEROES_V2 } from '@/data/heroes-v2';
 import { META_ALL } from '@/data/meta';
 import { calcStat } from '@/lib/hero-stats';
 import { trackEvent } from '@/lib/mixpanel';
@@ -38,12 +38,12 @@ export default function ComparePage() {
   );
 
   const heroes = useMemo(
-    () => [...HEROES].sort((a, b) => a.localized_name.localeCompare(b.localized_name)),
+    () => [...HEROES_V2].sort((a, b) => a.name_loc.localeCompare(b.name_loc)),
     []
   );
 
   const buckets = useMemo(() => {
-    const pool = metaFilter ? heroes.filter((h) => metaHeroNames.has(h.localized_name)) : heroes;
+    const pool = metaFilter ? heroes.filter((h) => metaHeroNames.has(h.name_loc)) : heroes;
     const entries = pool.map((h) => ({
       hero: h,
       value: calcStat(h, selectedDim, selectedLevel),

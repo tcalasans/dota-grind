@@ -15,7 +15,7 @@ Open any `.html` file inside `app/` directly in a browser. No server, build, or 
 - **`app/`** — public-facing folder containing all HTML pages and data files
 - **No external libraries** — pure vanilla HTML/CSS/JS, no frameworks, no chart libraries
 - **Single-file pages** — each page contains all its own styles (`<style>`) and logic (`<script>`); shared data lives in `app/resources/`
-- **Data source** — hero data is pre-fetched and stored in `app/resources/heroes.js` (run `/fetch-heroes` to refresh from the OpenDota API); meta picks per role are in `app/resources/meta.js`; ability data in `app/resources/abilities.js` and `app/resources/hero-abilities.js`; hero images use the Steam CDN (`https://cdn.cloudflare.steamstatic.com`)
+- **Data source** — hero data is pre-fetched from the official Dota 2 API and stored in `src/data/heroes-v2.ts` (run `/fetch-heroes-v2` to refresh); lightweight hero list in `src/data/herolist.ts`; meta picks per role in `src/data/meta.ts`; ability data in `src/data/abilities.ts` and `src/data/hero-abilities.ts`; hero images use the Steam CDN (`https://cdn.cloudflare.steamstatic.com`)
 - **Dark theme** — consistent palette: background `#1a1a2e`, sidebar `#0f1a2e`, accent `#e94560`, borders `#0f3460`
 
 ## Pages
