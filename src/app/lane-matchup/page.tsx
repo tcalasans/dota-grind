@@ -34,7 +34,7 @@ function LaneMatchupContent() {
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<SlotId | null>(null);
-  const [showResults, setShowResults] = useState(false);
+  const [hasTracked, setHasTracked] = useState(false);
 
   // Load from URL on mount
   useEffect(() => {
@@ -77,6 +77,13 @@ function LaneMatchupContent() {
   const hasSupports = slots.pos4 && slots.pos5;
   const canAnalyze = hasCores || hasSupports;
 
+  useEffect(() => {
+    if (canAnalyze && !hasTracked) {
+      trackEvent('start tool', { tool: 'Lane Matchup' });
+      setHasTracked(true);
+    }
+  }, [canAnalyze, hasTracked]);
+
   return (
     <>
       <PageHeader title="Lane Matchup Analysis" />
@@ -103,26 +110,8 @@ function LaneMatchupContent() {
           </div>
         </div>
 
-        {/* Analyze button */}
-        <div className="text-center mb-6">
-          <button
-            disabled={!canAnalyze}
-            onClick={() => {
-              setShowResults(true);
-              trackEvent('start tool', { tool: 'Lane Matchup' });
-            }}
-            className={`px-8 py-3 rounded-lg text-base font-semibold transition-all duration-200 ${
-              canAnalyze
-                ? 'bg-accent text-white cursor-pointer hover:brightness-110'
-                : 'bg-border text-text-dim cursor-not-allowed'
-            }`}
-          >
-            Analyze Matchup
-          </button>
-        </div>
-
         {/* Results */}
-        {showResults && (
+        {canAnalyze && (
           <div>
             <div className="mb-6 flex justify-center">
               <LevelSelector selectedLevel={selectedLevel} onLevelChange={setSelectedLevel} />
