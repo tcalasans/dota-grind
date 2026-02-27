@@ -12,6 +12,7 @@ const navLinks = [
   { href: '/simulator', icon: '\u25B6', label: 'Simulator' },
   { href: '/creep-quiz', icon: '\u265A', label: 'Creep Wave Timer' },
   { href: '/items', icon: '\u262F', label: 'Items' },
+  { href: '/build', icon: '\u265C', label: 'Build Builder' },
 ];
 
 export default function Sidebar() {
