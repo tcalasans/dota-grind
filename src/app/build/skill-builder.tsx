@@ -24,7 +24,8 @@ interface SkillBuilderProps {
 
 export default function SkillBuilder({ abilities, skills, onSkillsChange }: SkillBuilderProps) {
   const TOTAL_LEVELS = 18;
-  const ULT_LEVELS = [6, 12, 18];
+  // Minimum hero level required to skill each rank of the ultimate
+  const ULT_MIN_LEVEL = [6, 12, 18]; // rank 1 @ 6+, rank 2 @ 12+, rank 3 @ 18
 
   function getSkillCount(abilityIndex: number): number {
     return skills.filter((s) => s === abilityIndex).length;
@@ -40,7 +41,12 @@ export default function SkillBuilder({ abilities, skills, onSkillsChange }: Skil
     if (currentCount >= ability.max_level) return false;
 
     const nextLevel = skills.length + 1;
-    if (isUltimate(ability) && !ULT_LEVELS.includes(nextLevel)) return false;
+
+    // Ultimate: each rank has a minimum hero level requirement
+    if (isUltimate(ability)) {
+      const requiredLevel = ULT_MIN_LEVEL[currentCount];
+      if (requiredLevel === undefined || nextLevel < requiredLevel) return false;
+    }
 
     return true;
   }
@@ -139,7 +145,7 @@ export default function SkillBuilder({ abilities, skills, onSkillsChange }: Skil
             : assignedIdx !== undefined && assignedIdx >= 0
               ? ABILITY_COLORS[assignedIdx % ABILITY_COLORS.length]
               : undefined;
-          const isUltLevel = ULT_LEVELS.includes(level);
+          const isUltLevel = ULT_MIN_LEVEL.includes(level);
           const filled = assignedIdx !== undefined;
 
           return (
