@@ -287,6 +287,7 @@ function BuildContent() {
         {setupComplete && hero.talents.length >= 8 && (
           <div className="bg-header/50 rounded-xl border border-border p-5 mb-5">
             <TalentPicker
+              abilities={hero.abilities}
               talents={hero.talents}
               selected={talents}
               onSelectedChange={updateTalents}
