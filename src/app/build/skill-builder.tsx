@@ -4,13 +4,15 @@ import Image from 'next/image';
 import { HeroAbilityV2 } from '@/types/hero-v2';
 import { STEAM_CDN } from '@/lib/constants';
 
+/** Special index representing +2 All Stats */
+export const STATS_INDEX = -1;
+const STATS_COLOR = '#666';
+
 function abilityImageUrl(abilityName: string): string {
   return `${STEAM_CDN}/apps/dota2/images/dota_react/abilities/${abilityName}.png`;
 }
 
-/** Check if an ability is an ultimate (type 1 = ultimate in Dota 2 data) */
 function isUltimate(ability: HeroAbilityV2): boolean {
-  // Ultimates typically have max_level === 3
   return ability.max_level === 3;
 }
 
@@ -22,7 +24,7 @@ interface SkillBuilderProps {
 
 export default function SkillBuilder({ abilities, skills, onSkillsChange }: SkillBuilderProps) {
   const TOTAL_LEVELS = 18;
-  const ULT_LEVELS = [6, 12, 18]; // Levels at which ultimate can be skilled
+  const ULT_LEVELS = [6, 12, 18];
 
   function getSkillCount(abilityIndex: number): number {
     return skills.filter((s) => s === abilityIndex).length;
@@ -30,16 +32,15 @@ export default function SkillBuilder({ abilities, skills, onSkillsChange }: Skil
 
   function canAddSkill(abilityIndex: number): boolean {
     if (skills.length >= TOTAL_LEVELS) return false;
+
+    if (abilityIndex === STATS_INDEX) return true;
+
     const ability = abilities[abilityIndex];
     const currentCount = getSkillCount(abilityIndex);
     if (currentCount >= ability.max_level) return false;
 
     const nextLevel = skills.length + 1;
-
-    // Ultimate can only be skilled at levels 6, 12, 18
-    if (isUltimate(ability)) {
-      if (!ULT_LEVELS.includes(nextLevel)) return false;
-    }
+    if (isUltimate(ability) && !ULT_LEVELS.includes(nextLevel)) return false;
 
     return true;
   }
@@ -58,7 +59,9 @@ export default function SkillBuilder({ abilities, skills, onSkillsChange }: Skil
     onSkillsChange([]);
   }
 
-  // Colors for each ability slot
+  const statsCount = getSkillCount(STATS_INDEX);
+  const canAddStats = canAddSkill(STATS_INDEX);
+
   const ABILITY_COLORS = ['#3498db', '#27ae60', '#e4ae39', '#e94560', '#8e44ad', '#e67e22'];
 
   return (
@@ -102,37 +105,71 @@ export default function SkillBuilder({ abilities, skills, onSkillsChange }: Skil
             </button>
           );
         })}
+
+        {/* Stats button */}
+        <button
+          onClick={() => addSkill(STATS_INDEX)}
+          disabled={!canAddStats}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-all duration-200 ${
+            canAddStats
+              ? 'border-border bg-header hover:border-accent hover:bg-accent/10 cursor-pointer'
+              : 'border-border/50 bg-header/50 opacity-40 cursor-not-allowed'
+          }`}
+          title={`+2 All Stats (${statsCount} points)`}
+        >
+          <div className="w-[32px] h-[32px] rounded bg-[#666] flex items-center justify-center text-base font-bold text-white">
+            +
+          </div>
+          <div className="text-left">
+            <div className="text-xs font-semibold leading-tight">Stats</div>
+            <div className="text-[0.6rem] text-text-muted">+2 All ({statsCount})</div>
+          </div>
+        </button>
       </div>
 
       {/* Level slots row */}
       <div className="flex gap-1 mb-3 flex-wrap">
         {Array.from({ length: TOTAL_LEVELS }, (_, i) => {
           const level = i + 1;
-          const assignedAbilityIdx = skills[i];
-          const ability = assignedAbilityIdx !== undefined ? abilities[assignedAbilityIdx] : null;
-          const color = assignedAbilityIdx !== undefined ? ABILITY_COLORS[assignedAbilityIdx % ABILITY_COLORS.length] : undefined;
+          const assignedIdx = skills[i];
+          const isStats = assignedIdx === STATS_INDEX;
+          const ability = assignedIdx !== undefined && !isStats ? abilities[assignedIdx] : null;
+          const color = isStats
+            ? STATS_COLOR
+            : assignedIdx !== undefined && assignedIdx >= 0
+              ? ABILITY_COLORS[assignedIdx % ABILITY_COLORS.length]
+              : undefined;
           const isUltLevel = ULT_LEVELS.includes(level);
+          const filled = assignedIdx !== undefined;
 
           return (
             <div
               key={i}
               className={`flex flex-col items-center gap-0.5 min-w-[36px] ${
-                isUltLevel && !ability ? 'opacity-80' : ''
+                isUltLevel && !filled ? 'opacity-80' : ''
               }`}
             >
               <span className="text-[0.55rem] text-text-dim">{level}</span>
               <div
                 className={`w-[36px] h-[36px] rounded border flex items-center justify-center text-[0.6rem] font-bold transition-all duration-200 ${
-                  ability
+                  filled
                     ? 'border-transparent'
                     : isUltLevel
                       ? 'border-accent/40 bg-accent/5'
                       : 'border-border bg-header/50'
                 }`}
-                style={ability ? { backgroundColor: color, borderColor: color } : undefined}
-                title={ability ? `${ability.name_loc} (Level ${level})` : `Level ${level}${isUltLevel ? ' — Ultimate available' : ''}`}
+                style={filled ? { backgroundColor: color, borderColor: color } : undefined}
+                title={
+                  isStats
+                    ? `+2 All Stats (Level ${level})`
+                    : ability
+                      ? `${ability.name_loc} (Level ${level})`
+                      : `Level ${level}${isUltLevel ? ' — Ultimate available' : ''}`
+                }
               >
-                {ability ? (
+                {isStats ? (
+                  <span className="text-white text-sm font-bold">+</span>
+                ) : ability ? (
                   <Image
                     src={abilityImageUrl(ability.name)}
                     alt={ability.name_loc}
