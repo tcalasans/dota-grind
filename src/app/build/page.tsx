@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { HeroV2 } from '@/types/hero-v2';
 import { ItemV2 } from '@/types/item-v2';
 import { HEROES_V2 } from '@/data/heroes-v2';
 import { ITEMS_V2 } from '@/data/items-v2';
+import { ITEM_LIST } from '@/data/itemlist';
 import { heroImageFromName, itemImageFromName } from '@/lib/image-urls';
 import { trackEvent } from '@/lib/mixpanel';
 import PageHeader from '@/components/page-header';
@@ -14,6 +15,32 @@ import HeroPicker from '@/components/hero-picker';
 import SkillBuilder from './skill-builder';
 import TalentPicker from './talent-picker';
 import ItemPicker from './item-picker';
+
+/** Build a map: componentItemId -> list of items it upgrades into */
+function buildUpgradeLookup(): Map<number, ItemV2[]> {
+  const itemByName = new Map(ITEMS_V2.map((i) => [i.name, i]));
+  const lookup = new Map<number, ItemV2[]>();
+
+  for (const entry of ITEM_LIST) {
+    if (entry.recipes.length === 0 || !entry.name.includes('recipe')) continue;
+    const builtName = entry.name.replace('_recipe', '');
+    const builtItem = itemByName.get(builtName);
+    if (!builtItem || !builtItem.name_loc) continue;
+
+    for (const recipe of entry.recipes) {
+      for (const compId of recipe.items) {
+        const list = lookup.get(compId) || [];
+        if (!list.some((u) => u.id === builtItem.id)) {
+          list.push(builtItem);
+        }
+        lookup.set(compId, list);
+      }
+    }
+  }
+  return lookup;
+}
+
+const UPGRADE_LOOKUP = buildUpgradeLookup();
 
 type Role = 'carry' | 'offlaner' | 'midlaner' | 'sup4' | 'sup5';
 
@@ -28,6 +55,8 @@ const ROLES: { value: Role; label: string }[] = [
 interface BuildItem {
   itemId: number;
   timing: number;
+  /** Index of the parent item this was upgraded from, or null for base items */
+  upgradeOf: number | null;
 }
 
 function BuildContent() {
@@ -44,6 +73,7 @@ function BuildContent() {
   const [heroPickerOpen, setHeroPickerOpen] = useState(false);
   const [itemPickerOpen, setItemPickerOpen] = useState(false);
   const [hasTracked, setHasTracked] = useState(false);
+  const [upgradeMenuIndex, setUpgradeMenuIndex] = useState<number | null>(null);
 
   // Load from URL on mount
   useEffect(() => {
@@ -82,9 +112,12 @@ function BuildContent() {
 
         const itemsParam = searchParams.get('items');
         if (itemsParam) {
-          const parsed = itemsParam.split(',').map((pair) => {
-            const [id, timing] = pair.split(':').map(Number);
-            return { itemId: id, timing: timing || 0 };
+          const parsed = itemsParam.split(',').map((token) => {
+            // Format: itemId:timing or itemId:timing>parentIdx
+            const [main, parentStr] = token.split('>');
+            const [id, timing] = main.split(':').map(Number);
+            const upgradeOf = parentStr !== undefined ? parseInt(parentStr) : null;
+            return { itemId: id, timing: timing || 0, upgradeOf: isNaN(upgradeOf as number) ? null : upgradeOf };
           }).filter((i) => !isNaN(i.itemId));
           setItems(parsed);
         }
@@ -109,13 +142,31 @@ function BuildContent() {
       const talentStr = state.talents.map((t) => t || '_').join('');
       if (talentStr !== '____') params.set('talents', talentStr);
       if (state.items.length > 0) {
-        params.set('items', state.items.map((i) => `${i.itemId}:${i.timing}`).join(','));
+        params.set(
+          'items',
+          state.items.map((i) => {
+            const base = `${i.itemId}:${i.timing}`;
+            return i.upgradeOf !== null ? `${base}>${i.upgradeOf}` : base;
+          }).join(',')
+        );
       }
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : '/build', { scroll: false });
     },
     [router]
   );
+
+  // Close upgrade menu on outside click
+  useEffect(() => {
+    if (upgradeMenuIndex === null) return;
+    const handleClick = () => setUpgradeMenuIndex(null);
+    // Delay to avoid closing immediately from the button click
+    const timer = setTimeout(() => document.addEventListener('click', handleClick), 0);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleClick);
+    };
+  }, [upgradeMenuIndex]);
 
   // Track first hero selection
   useEffect(() => {
@@ -157,13 +208,42 @@ function BuildContent() {
   }
 
   function addItem(item: ItemV2) {
-    const newItems = [...items, { itemId: item.id, timing: 0 }];
+    const newItems = [...items, { itemId: item.id, timing: 0, upgradeOf: null }];
     setItems(newItems);
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
   }
 
   function removeItem(index: number) {
-    const newItems = items.filter((_, i) => i !== index);
+    // Collect indices to remove: the item itself + any upgrades that reference it
+    const toRemove = new Set<number>([index]);
+    // Cascade: also remove upgrades of upgrades, etc.
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 0; i < items.length; i++) {
+        if (!toRemove.has(i) && items[i].upgradeOf !== null && toRemove.has(items[i].upgradeOf!)) {
+          toRemove.add(i);
+          changed = true;
+        }
+      }
+    }
+
+    const newItems: BuildItem[] = [];
+    // Map old indices to new indices for upgradeOf references
+    const indexMap = new Map<number, number>();
+    for (let i = 0; i < items.length; i++) {
+      if (!toRemove.has(i)) {
+        indexMap.set(i, newItems.length);
+        newItems.push({ ...items[i] });
+      }
+    }
+    // Remap upgradeOf references
+    for (const item of newItems) {
+      if (item.upgradeOf !== null) {
+        item.upgradeOf = indexMap.get(item.upgradeOf) ?? null;
+      }
+    }
+
     setItems(newItems);
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
   }
@@ -174,12 +254,21 @@ function BuildContent() {
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
   }
 
-  function moveItem(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= items.length) return;
-    const newItems = [...items];
-    [newItems[index], newItems[target]] = [newItems[target], newItems[index]];
+  function upgradeItem(parentIndex: number, upgrade: ItemV2) {
+    // Insert the upgrade right after the parent
+    const newItem: BuildItem = { itemId: upgrade.id, timing: 0, upgradeOf: parentIndex };
+    const insertAt = parentIndex + 1;
+    const newItems = [...items].map((item) => ({ ...item }));
+    newItems.splice(insertAt, 0, newItem);
+    // Adjust upgradeOf references for items that shifted
+    for (let i = 0; i < newItems.length; i++) {
+      if (i === insertAt) continue; // skip the newly inserted item
+      if (newItems[i].upgradeOf !== null && newItems[i].upgradeOf! >= insertAt) {
+        newItems[i].upgradeOf = newItems[i].upgradeOf! + 1;
+      }
+    }
     setItems(newItems);
+    setUpgradeMenuIndex(null);
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
   }
 
@@ -307,36 +396,24 @@ function BuildContent() {
                 {items.map((buildItem, idx) => {
                   const itemData = ITEMS_V2.find((i) => i.id === buildItem.itemId);
                   if (!itemData) return null;
+                  const upgrades = UPGRADE_LOOKUP.get(buildItem.itemId);
+                  const showUpgradeMenu = upgradeMenuIndex === idx;
+                  const isUpgrade = buildItem.upgradeOf !== null;
+                  const parentData = isUpgrade
+                    ? ITEMS_V2.find((i) => i.id === items[buildItem.upgradeOf!]?.itemId)
+                    : null;
+
                   return (
                     <div
                       key={`${buildItem.itemId}-${idx}`}
-                      className="flex items-center gap-3 bg-primary rounded-lg p-2 border border-border"
+                      className={`relative flex items-center gap-3 bg-primary rounded-lg p-2 border border-border ${
+                        isUpgrade ? 'ml-8' : ''
+                      }`}
                     >
-                      {/* Reorder buttons */}
-                      <div className="flex flex-col gap-0.5">
-                        <button
-                          onClick={() => moveItem(idx, -1)}
-                          disabled={idx === 0}
-                          className={`text-[0.6rem] leading-none px-1 py-0.5 rounded transition-all ${
-                            idx === 0
-                              ? 'text-text-dim/30 cursor-not-allowed'
-                              : 'text-text-muted hover:text-accent cursor-pointer'
-                          }`}
-                        >
-                          ▲
-                        </button>
-                        <button
-                          onClick={() => moveItem(idx, 1)}
-                          disabled={idx === items.length - 1}
-                          className={`text-[0.6rem] leading-none px-1 py-0.5 rounded transition-all ${
-                            idx === items.length - 1
-                              ? 'text-text-dim/30 cursor-not-allowed'
-                              : 'text-text-muted hover:text-accent cursor-pointer'
-                          }`}
-                        >
-                          ▼
-                        </button>
-                      </div>
+                      {/* Upgrade link indicator */}
+                      {isUpgrade && (
+                        <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-text-dim text-xs">↳</span>
+                      )}
 
                       <Image
                         src={itemImageFromName(itemData.name)}
@@ -349,8 +426,55 @@ function BuildContent() {
 
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold leading-tight">{itemData.name_loc}</div>
-                        <div className="text-[0.65rem] text-[#e4ae39]">{itemData.item_cost} gold</div>
+                        <div className="text-[0.65rem] text-[#e4ae39]">
+                          {itemData.item_cost} gold
+                          {parentData && (
+                            <span className="text-text-dim ml-1.5">
+                              (from {parentData.name_loc})
+                            </span>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Upgrade button */}
+                      {upgrades && upgrades.length > 0 && (
+                        <button
+                          onClick={() => setUpgradeMenuIndex(showUpgradeMenu ? null : idx)}
+                          className="text-[0.7rem] px-2 py-1 rounded border border-border bg-header text-text-muted hover:text-accent hover:border-accent cursor-pointer transition-all"
+                          title="Upgrade item"
+                        >
+                          ⬆
+                        </button>
+                      )}
+
+                      {/* Upgrade dropdown */}
+                      {showUpgradeMenu && upgrades && (
+                        <div className="absolute right-0 top-full mt-1 z-50 bg-header border border-border rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] min-w-[200px]">
+                          <div className="px-3 py-2 border-b border-border text-[0.65rem] text-text-muted uppercase tracking-wide">
+                            Upgrade to
+                          </div>
+                          {upgrades.map((upgrade) => (
+                            <button
+                              key={upgrade.id}
+                              onClick={() => upgradeItem(idx, upgrade)}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-accent/10 cursor-pointer transition-colors"
+                            >
+                              <Image
+                                src={itemImageFromName(upgrade.name)}
+                                alt={upgrade.name_loc}
+                                width={32}
+                                height={24}
+                                className="rounded bg-[#0f1a2e]"
+                                loading="lazy"
+                              />
+                              <div>
+                                <div className="text-xs font-semibold">{upgrade.name_loc}</div>
+                                <div className="text-[0.6rem] text-[#e4ae39]">{upgrade.item_cost} gold</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Timing input */}
                       <div className="flex items-center gap-1">
@@ -369,7 +493,7 @@ function BuildContent() {
                       <button
                         onClick={() => removeItem(idx)}
                         className="text-text-muted hover:text-accent text-lg leading-none px-1 cursor-pointer transition-colors"
-                        title="Remove item"
+                        title={isUpgrade ? 'Remove upgrade' : 'Remove item'}
                       >
                         &times;
                       </button>
