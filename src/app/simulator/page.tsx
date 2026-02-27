@@ -5,15 +5,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { HeroV2 } from '@/types/hero-v2';
 import { HEROES_V2 } from '@/data/heroes-v2';
-import { ITEMS } from '@/data/items';
-import { heroImageFromName } from '@/lib/image-urls';
+import { ITEMS_V2 } from '@/data/items-v2';
+import { heroImageFromName, itemImageFromName } from '@/lib/image-urls';
 import { trackEvent } from '@/lib/mixpanel';
 import HeroPicker from '@/components/hero-picker';
 import BootSelector, { BootItem } from './boot-selector';
 import { useSimulation } from './use-simulation';
 
 const DEFAULT_TURN_RATE = 0.6;
-const BOOT_KEYS = ['boots', 'phase_boots', 'power_treads', 'travel_boots', 'travel_boots_2', 'arcane_boots', 'tranquil_boots', 'guardian_greaves', 'boots_of_bearing'];
+const BOOT_NAMES = ['item_boots', 'item_phase_boots', 'item_power_treads', 'item_travel_boots', 'item_travel_boots_2', 'item_arcane_boots', 'item_tranquil_boots', 'item_guardian_greaves', 'item_boots_of_bearing'];
 
 function SimulatorContent() {
   const searchParams = useSearchParams();
@@ -29,17 +29,17 @@ function SimulatorContent() {
   const { start, stop, handleMouseDown, handleMouseMove, handleStop } = useSimulation(canvasRef, containerRef);
 
   const bootItems = useMemo(() => {
-    return BOOT_KEYS
-      .filter((k) => ITEMS[k])
-      .map((k) => {
-        const item = ITEMS[k];
+    return BOOT_NAMES
+      .map((name) => ITEMS_V2.find((i) => i.name === name))
+      .filter((item): item is (typeof ITEMS_V2)[number] => !!item)
+      .map((item) => {
         let ms = 0;
-        for (const attr of item.attrib || []) {
-          if (['bonus_movement_speed', 'bonus_movement', 'bonus_movement_speed_melee'].includes(attr.key)) {
-            ms = Math.max(ms, parseInt(attr.value) || 0);
+        for (const sv of item.special_values) {
+          if (['bonus_movement_speed', 'bonus_movement', 'bonus_movement_speed_melee'].includes(sv.name)) {
+            ms = Math.max(ms, sv.values_float[0] || 0);
           }
         }
-        return { key: k, dname: item.dname || k, img: item.img, ms };
+        return { key: item.name, dname: item.name_loc, img: itemImageFromName(item.name), ms };
       })
       .sort((a, b) => a.ms - b.ms);
   }, []);

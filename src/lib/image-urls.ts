@@ -12,3 +12,8 @@ export function heroImageFromName(heroName: string): string {
 export function itemImageUrl(imgPath: string): string {
   return `${STEAM_CDN}${imgPath}`;
 }
+
+export function itemImageFromName(itemName: string): string {
+  const slug = itemName.replace('item_', '');
+  return `${STEAM_CDN}/apps/dota2/images/dota_react/items/${slug}.png`;
+}

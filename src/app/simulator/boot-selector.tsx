@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { itemImageUrl } from '@/lib/image-urls';
 
 export interface BootItem {
   key: string;
@@ -41,7 +40,7 @@ export default function BootSelector({ boots, selectedBoot, onSelect }: BootSele
             onClick={() => onSelect(boot)}
           >
             <Image
-              src={itemImageUrl(boot.img)}
+              src={boot.img}
               alt={boot.dname}
               width={36}
               height={27}

@@ -1,54 +1,50 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Item } from '@/types/item';
-import { ITEMS } from '@/data/items';
+import { ItemV2 } from '@/types/item-v2';
+import { ITEMS_V2 } from '@/data/items-v2';
 import { trackEvent } from '@/lib/mixpanel';
 import PageHeader from '@/components/page-header';
 import FilterBar from '@/components/filter-bar';
 import ItemCard from './item-card';
 import ItemDetailModal from './item-detail-modal';
 
-type ItemWithKey = Item & { key: string };
-
 const QUALITY_FILTERS = [
   { value: 'all', label: 'All' },
-  { value: 'consumable', label: 'Consumable', colorClass: 'bg-[#008080] border-[#008080]' },
-  { value: 'component', label: 'Component', colorClass: 'bg-[#666] border-[#666]' },
-  { value: 'common', label: 'Common', colorClass: 'bg-[#aaa] border-[#aaa] text-black' },
-  { value: 'rare', label: 'Rare', colorClass: 'bg-[#5b8af7] border-[#5b8af7]' },
-  { value: 'epic', label: 'Epic', colorClass: 'bg-[#b369f0] border-[#b369f0]' },
-  { value: 'artifact', label: 'Artifact', colorClass: 'bg-[#e4ae39] border-[#e4ae39] text-black' },
-  { value: 'secret_shop', label: 'Secret Shop', colorClass: 'bg-[#27ae60] border-[#27ae60]' },
+  { value: '0', label: 'Consumable', colorClass: 'bg-[#008080] border-[#008080]' },
+  { value: '1', label: 'Component', colorClass: 'bg-[#666] border-[#666]' },
+  { value: '2', label: 'Common', colorClass: 'bg-[#aaa] border-[#aaa] text-black' },
+  { value: '3', label: 'Rare', colorClass: 'bg-[#5b8af7] border-[#5b8af7]' },
+  { value: '4', label: 'Epic', colorClass: 'bg-[#b369f0] border-[#b369f0]' },
+  { value: '5', label: 'Artifact', colorClass: 'bg-[#e4ae39] border-[#e4ae39] text-black' },
+  { value: '6', label: 'Secret Shop', colorClass: 'bg-[#27ae60] border-[#27ae60]' },
 ];
 
 export default function ItemsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [selectedItem, setSelectedItem] = useState<ItemWithKey | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ItemV2 | null>(null);
 
   useEffect(() => {
     trackEvent('open page', { page: 'Items' });
   }, []);
 
   const items = useMemo(() => {
-    return Object.entries(ITEMS)
-      .map(([key, item]) => ({ ...item, key }))
+    return ITEMS_V2
       .filter(
         (item) =>
-          item.dname &&
-          item.cost !== null &&
-          item.cost > 0 &&
-          !('tier' in item) &&
-          item.key !== 'courier' &&
-          item.key !== 'flying_courier'
+          item.name_loc &&
+          item.item_cost > 0 &&
+          !item.name.includes('recipe') &&
+          item.name !== 'item_courier' &&
+          item.name !== 'item_flying_courier'
       )
-      .sort((a, b) => (a.dname || '').localeCompare(b.dname || ''));
+      .sort((a, b) => a.name_loc.localeCompare(b.name_loc));
   }, []);
 
   const filtered = items.filter((item) => {
-    const matchName = (item.dname || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchQual = activeFilter === 'all' || item.qual === activeFilter;
+    const matchName = item.name_loc.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchQual = activeFilter === 'all' || item.item_quality === Number(activeFilter);
     return matchName && matchQual;
   });
 
@@ -68,7 +64,7 @@ export default function ItemsPage() {
           <div className="col-span-full text-center text-text-muted py-10 text-lg">No items found.</div>
         ) : (
           filtered.map((item) => (
-            <ItemCard key={item.key} item={item} onClick={setSelectedItem} />
+            <ItemCard key={item.id} item={item} onClick={setSelectedItem} />
           ))
         )}
       </div>

@@ -61,3 +61,23 @@ export interface ItemV2 {
   item_stock_time: number;
   item_quality: number;
 }
+
+export const ITEM_QUALITY_LABELS: Record<number, string> = {
+  0: 'Consumable',
+  1: 'Component',
+  2: 'Common',
+  3: 'Rare',
+  4: 'Epic',
+  5: 'Artifact',
+  6: 'Secret Shop',
+};
+
+export const ITEM_QUALITY_BADGE_CLASS: Record<number, string> = {
+  0: 'bg-[#008080]',
+  1: 'bg-[#666]',
+  2: 'bg-[#aaa] text-black',
+  3: 'bg-[#5b8af7]',
+  4: 'bg-[#b369f0]',
+  5: 'bg-[#e4ae39] text-black',
+  6: 'bg-[#27ae60]',
+};
