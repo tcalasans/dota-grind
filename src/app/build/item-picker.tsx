@@ -103,11 +103,11 @@ export default function ItemPicker({ open, onClose, onSelect }: ItemPickerProps)
           ))}
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-2 p-5 overflow-y-auto flex-1">
+        <div className="grid grid-cols-[repeat(auto-fill,40px)] gap-2 p-5 overflow-y-auto flex-1 justify-center">
           {filtered.map((item) => (
             <div
               key={item.id}
-              className="relative rounded-md overflow-hidden cursor-pointer border-2 border-transparent bg-primary transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(233,69,96,0.3)] hover:border-accent"
+              className="group relative w-[40px] h-[40px] rounded cursor-pointer border-2 border-transparent bg-primary transition-all duration-200 hover:border-accent hover:z-10"
               onClick={() => {
                 onSelect(item);
                 onClose();
@@ -116,17 +116,14 @@ export default function ItemPicker({ open, onClose, onSelect }: ItemPickerProps)
               <Image
                 src={itemImageFromName(item.name)}
                 alt={item.name_loc}
-                width={88}
-                height={64}
-                className="w-full block object-cover bg-[#0f1a2e]"
-                style={{ aspectRatio: '88/64' }}
+                width={40}
+                height={40}
+                className="w-full h-full block object-cover rounded bg-[#0f1a2e]"
                 loading="lazy"
               />
-              <span className="absolute top-1 right-1 bg-black/75 text-[#e4ae39] text-[0.6rem] font-bold px-1 py-0.5 rounded">
-                {item.item_cost}
-              </span>
-              <div className="text-[0.65rem] uppercase text-center py-1 px-1 tracking-wide font-semibold leading-tight">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-black/90 text-text-primary text-[0.6rem] font-semibold px-2 py-1 rounded whitespace-nowrap pointer-events-none z-20">
                 {item.name_loc}
+                <span className="text-[#e4ae39] ml-1">{item.item_cost}</span>
               </div>
             </div>
           ))}
