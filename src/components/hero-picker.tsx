@@ -45,7 +45,7 @@ export default function HeroPicker({ open, onClose, onSelect, title = 'Select He
 
   if (!open) return null;
 
-  const metaList = metaFilter && metaHeroes ? metaHeroes.slice(0, 6) : null;
+  const metaList = metaFilter && metaHeroes ? metaHeroes : null;
 
   let filtered = HEROES_V2.filter((h) => {
     const matchName = h.name_loc.toLowerCase().includes(search.toLowerCase());

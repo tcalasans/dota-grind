@@ -10,6 +10,7 @@ import { ITEMS_V2 } from '@/data/items-v2';
 import { ITEM_LIST } from '@/data/itemlist';
 import { heroImageFromName, itemImageFromName } from '@/lib/image-urls';
 import { trackEvent } from '@/lib/mixpanel';
+import { META_CARRY, META_MIDLANER, META_OFFLANER, META_SOFT_SUPPORT, META_HARD_SUPPORT } from '@/data/meta';
 import PageHeader from '@/components/page-header';
 import HeroPicker from '@/components/hero-picker';
 import SkillBuilder from './skill-builder';
@@ -87,6 +88,8 @@ const ROLES: { value: Role; label: string }[] = [
   { value: 'sup4', label: 'Sup 4' },
   { value: 'sup5', label: 'Sup 5' },
 ];
+
+const META_ALL_UNIQUE = [...new Set([...META_CARRY, ...META_MIDLANER, ...META_OFFLANER, ...META_SOFT_SUPPORT, ...META_HARD_SUPPORT])];
 
 interface BuildItem {
   itemId: number;
@@ -553,6 +556,7 @@ function BuildContent() {
         onClose={() => setHeroPickerOpen(false)}
         onSelect={selectHero}
         title="Select Hero"
+        metaHeroes={META_ALL_UNIQUE}
       />
 
       <ItemPicker
