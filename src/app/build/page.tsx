@@ -439,6 +439,7 @@ function BuildContent() {
                   const upgrades = UPGRADE_LOOKUP.get(buildItem.itemId);
                   const showUpgradeMenu = upgradeMenuIndex === idx;
                   const isUpgrade = buildItem.upgradeOf !== null;
+                  const alreadyUpgraded = items.some((it) => it.upgradeOf === idx);
                   const parentData = isUpgrade
                     ? ITEMS_V2.find((i) => i.id === items[buildItem.upgradeOf!]?.itemId)
                     : null;
@@ -474,7 +475,7 @@ function BuildContent() {
                         </div>
 
                         {/* Upgrade button */}
-                        {upgrades && upgrades.length > 0 && (
+                        {upgrades && upgrades.length > 0 && !alreadyUpgraded && (
                           <button
                             onClick={() => setUpgradeMenuIndex(showUpgradeMenu ? null : idx)}
                             className="text-[0.7rem] px-2 py-1 rounded border border-border bg-header text-text-muted hover:text-accent hover:border-accent cursor-pointer transition-all"
