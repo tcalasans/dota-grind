@@ -285,18 +285,8 @@ function BuildContent() {
   }
 
   function upgradeItem(parentIndex: number, upgrade: ItemV2) {
-    // Insert the upgrade right after the parent
     const newItem: BuildItem = { itemId: upgrade.id, timing: 0, upgradeOf: parentIndex };
-    const insertAt = parentIndex + 1;
-    const newItems = [...items].map((item) => ({ ...item }));
-    newItems.splice(insertAt, 0, newItem);
-    // Adjust upgradeOf references for items that shifted
-    for (let i = 0; i < newItems.length; i++) {
-      if (i === insertAt) continue; // skip the newly inserted item
-      if (newItems[i].upgradeOf !== null && newItems[i].upgradeOf! >= insertAt) {
-        newItems[i].upgradeOf = newItems[i].upgradeOf! + 1;
-      }
-    }
+    const newItems = [...items.map((item) => ({ ...item })), newItem];
     setItems(newItems);
     setUpgradeMenuIndex(null);
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
@@ -436,13 +426,11 @@ function BuildContent() {
                   return (
                     <div
                       key={`${buildItem.itemId}-${idx}`}
-                      className={`relative flex items-center gap-3 bg-primary rounded-lg p-2 border border-border ${
-                        isUpgrade ? 'ml-8' : ''
-                      }`}
+                      className="relative flex items-center gap-3 bg-primary rounded-lg p-2 border border-border"
                     >
                       {/* Upgrade link indicator */}
                       {isUpgrade && (
-                        <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-text-dim text-xs">↳</span>
+                        <span className="text-text-dim text-[0.6rem] mr-[-4px]">⬆</span>
                       )}
 
                       <Image
