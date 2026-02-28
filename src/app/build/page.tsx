@@ -416,7 +416,18 @@ function BuildContent() {
               Itemization
             </h3>
 
-            {items.length > 0 && (
+            {items.length > 0 && (() => {
+              const rollingNW: number[] = [];
+              let nw = 0;
+              for (let i = 0; i < items.length; i++) {
+                const d = ITEMS_V2.find((it) => it.id === items[i].itemId);
+                const p = items[i].upgradeOf !== null
+                  ? ITEMS_V2.find((it) => it.id === items[items[i].upgradeOf!]?.itemId)
+                  : null;
+                nw += d ? (p ? d.item_cost - p.item_cost : d.item_cost) : 0;
+                rollingNW.push(nw);
+              }
+              return (
               <div className="flex flex-col gap-2 mb-4">
                 {items.map((buildItem, idx) => {
                   const itemData = ITEMS_V2.find((i) => i.id === buildItem.itemId);
@@ -429,102 +440,109 @@ function BuildContent() {
                     : null;
 
                   return (
-                    <div
-                      key={`${buildItem.itemId}-${idx}`}
-                      className="relative flex items-center gap-3 bg-primary rounded-lg p-2 border border-border"
-                    >
-                      {/* Upgrade link indicator */}
-                      {isUpgrade && (
-                        <span className="text-text-dim text-[0.6rem] mr-[-4px]">⬆</span>
-                      )}
+                    <div key={`${buildItem.itemId}-${idx}`} className="flex items-center gap-3">
+                      {/* Item card */}
+                      <div className="relative flex items-center gap-3 bg-primary rounded-lg p-2 border border-border flex-1 min-w-0">
+                        {/* Upgrade link indicator */}
+                        {isUpgrade && (
+                          <span className="text-text-dim text-[0.6rem] mr-[-4px]">⬆</span>
+                        )}
 
-                      <Image
-                        src={itemImageFromName(itemData.name)}
-                        alt={itemData.name_loc}
-                        width={44}
-                        height={32}
-                        className="rounded bg-[#0f1a2e]"
-                        loading="lazy"
-                      />
-
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold leading-tight">{itemData.name_loc}</div>
-                        <div className="text-[0.65rem] text-[#e4ae39]">
-                          {parentData ? `+${itemData.item_cost - parentData.item_cost}` : itemData.item_cost} gold
-                          {parentData && (
-                            <span className="text-text-dim ml-1.5">
-                              (from {parentData.name_loc})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Upgrade button */}
-                      {upgrades && upgrades.length > 0 && (
-                        <button
-                          onClick={() => setUpgradeMenuIndex(showUpgradeMenu ? null : idx)}
-                          className="text-[0.7rem] px-2 py-1 rounded border border-border bg-header text-text-muted hover:text-accent hover:border-accent cursor-pointer transition-all"
-                          title="Upgrade item"
-                        >
-                          ⬆
-                        </button>
-                      )}
-
-                      {/* Upgrade dropdown */}
-                      {showUpgradeMenu && upgrades && (
-                        <div className="absolute right-0 top-full mt-1 z-50 bg-header border border-border rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] min-w-[200px]">
-                          <div className="px-3 py-2 border-b border-border text-[0.65rem] text-text-muted uppercase tracking-wide">
-                            Upgrade to
-                          </div>
-                          {upgrades.map((upgrade) => (
-                            <button
-                              key={upgrade.id}
-                              onClick={() => upgradeItem(idx, upgrade)}
-                              className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-accent/10 cursor-pointer transition-colors"
-                            >
-                              <Image
-                                src={itemImageFromName(upgrade.name)}
-                                alt={upgrade.name_loc}
-                                width={32}
-                                height={24}
-                                className="rounded bg-[#0f1a2e]"
-                                loading="lazy"
-                              />
-                              <div>
-                                <div className="text-xs font-semibold">{upgrade.name_loc}</div>
-                                <div className="text-[0.6rem] text-[#e4ae39]">{upgrade.item_cost} gold</div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Timing input */}
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          min={idx > 0 ? items[idx - 1].timing : 0}
-                          max={idx < items.length - 1 ? items[idx + 1].timing : 120}
-                          value={buildItem.timing}
-                          onChange={(e) => updateItemTiming(idx, parseInt(e.target.value) || 0)}
-                          className="w-[50px] px-2 py-1 rounded border border-border bg-header text-text-primary text-xs text-center outline-none focus:border-accent"
+                        <Image
+                          src={itemImageFromName(itemData.name)}
+                          alt={itemData.name_loc}
+                          width={44}
+                          height={32}
+                          className="rounded bg-[#0f1a2e]"
+                          loading="lazy"
                         />
-                        <span className="text-[0.65rem] text-text-muted">min</span>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold leading-tight">{itemData.name_loc}</div>
+                          <div className="text-[0.65rem] text-[#e4ae39]">
+                            {parentData ? `+${itemData.item_cost - parentData.item_cost}` : itemData.item_cost} gold
+                            {parentData && (
+                              <span className="text-text-dim ml-1.5">
+                                (from {parentData.name_loc})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Upgrade button */}
+                        {upgrades && upgrades.length > 0 && (
+                          <button
+                            onClick={() => setUpgradeMenuIndex(showUpgradeMenu ? null : idx)}
+                            className="text-[0.7rem] px-2 py-1 rounded border border-border bg-header text-text-muted hover:text-accent hover:border-accent cursor-pointer transition-all"
+                            title="Upgrade item"
+                          >
+                            ⬆
+                          </button>
+                        )}
+
+                        {/* Upgrade dropdown */}
+                        {showUpgradeMenu && upgrades && (
+                          <div className="absolute right-0 top-full mt-1 z-50 bg-header border border-border rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.5)] min-w-[200px]">
+                            <div className="px-3 py-2 border-b border-border text-[0.65rem] text-text-muted uppercase tracking-wide">
+                              Upgrade to
+                            </div>
+                            {upgrades.map((upgrade) => (
+                              <button
+                                key={upgrade.id}
+                                onClick={() => upgradeItem(idx, upgrade)}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-accent/10 cursor-pointer transition-colors"
+                              >
+                                <Image
+                                  src={itemImageFromName(upgrade.name)}
+                                  alt={upgrade.name_loc}
+                                  width={32}
+                                  height={24}
+                                  className="rounded bg-[#0f1a2e]"
+                                  loading="lazy"
+                                />
+                                <div>
+                                  <div className="text-xs font-semibold">{upgrade.name_loc}</div>
+                                  <div className="text-[0.6rem] text-[#e4ae39]">{upgrade.item_cost} gold</div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Timing input */}
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={idx > 0 ? items[idx - 1].timing : 0}
+                            max={idx < items.length - 1 ? items[idx + 1].timing : 120}
+                            value={buildItem.timing}
+                            onChange={(e) => updateItemTiming(idx, parseInt(e.target.value) || 0)}
+                            className="w-[50px] px-2 py-1 rounded border border-border bg-header text-text-primary text-xs text-center outline-none focus:border-accent"
+                          />
+                          <span className="text-[0.65rem] text-text-muted">min</span>
+                        </div>
+
+                        {/* Remove */}
+                        <button
+                          onClick={() => removeItem(idx)}
+                          className="text-text-muted hover:text-accent text-lg leading-none px-1 cursor-pointer transition-colors"
+                          title={isUpgrade ? 'Remove upgrade' : 'Remove item'}
+                        >
+                          &times;
+                        </button>
                       </div>
 
-                      {/* Remove */}
-                      <button
-                        onClick={() => removeItem(idx)}
-                        className="text-text-muted hover:text-accent text-lg leading-none px-1 cursor-pointer transition-colors"
-                        title={isUpgrade ? 'Remove upgrade' : 'Remove item'}
-                      >
-                        &times;
-                      </button>
+                      {/* Net Worth */}
+                      <div className="flex flex-col items-center w-[70px] shrink-0">
+                        <div className="text-[0.55rem] text-text-dim uppercase tracking-wide">Net Worth</div>
+                        <div className="text-sm font-bold text-[#e4ae39]">{rollingNW[idx].toLocaleString()}</div>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-            )}
+              );
+            })()}
 
             <button
               onClick={() => setItemPickerOpen(true)}
