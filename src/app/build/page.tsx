@@ -76,15 +76,7 @@ function base32Decode(input: string): string {
   return new TextDecoder().decode(new Uint8Array(bytes));
 }
 
-/* ── Build state JSON shape (compact keys) ── */
-interface BuildJSON {
-  h?: number;                              // hero id
-  f?: number;                              // facet index
-  r?: string;                              // role
-  s?: number[];                            // skills
-  t?: string;                              // talents e.g. "LR_R"
-  i?: [number, number, number | null][];   // items: [itemId, timing, upgradeOf]
-}
+import { BuildJSON } from '@/types/build';
 
 type Role = 'carry' | 'offlaner' | 'midlaner' | 'sup4' | 'sup5';
 
