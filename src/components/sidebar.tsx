@@ -36,10 +36,7 @@ export default function Sidebar() {
       )}
 
       <aside
-        className={`w-[220px] min-h-screen bg-sidebar border-r border-border flex flex-col fixed top-0 left-0 z-200 transition-transform duration-300 max-md:${open ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{
-          transform: typeof window !== 'undefined' && window.innerWidth <= 768 && !open ? 'translateX(-100%)' : undefined,
-        }}
+        className={`w-[220px] min-h-screen bg-sidebar border-r border-border flex flex-col fixed top-0 left-0 z-200 transition-transform duration-300 max-md:-translate-x-full ${open ? 'max-md:!translate-x-0' : ''}`}
       >
         <div className="px-4 py-5 border-b-2 border-accent text-center">
           <h2 className="text-[1.1rem] text-accent tracking-wide font-bold">DOTA 2</h2>
