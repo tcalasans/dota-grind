@@ -445,7 +445,7 @@ function BuildContent() {
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold leading-tight">{itemData.name_loc}</div>
                         <div className="text-[0.65rem] text-[#e4ae39]">
-                          {itemData.item_cost} gold
+                          {parentData ? `+${itemData.item_cost - parentData.item_cost}` : itemData.item_cost} gold
                           {parentData && (
                             <span className="text-text-dim ml-1.5">
                               (from {parentData.name_loc})
