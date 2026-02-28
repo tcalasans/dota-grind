@@ -1,5 +1,6 @@
 import { HeroV2, HeroStats, StatDimension } from '@/types/hero-v2';
 
+export const UNIVERSAL_DMG_PER_ATTR = 0.45;
 export const XP_PER_MINUTE = 360;
 export const LEVEL_XP = [0, 230, 600, 1080, 1660, 2260, 2980, 3820, 4780, 5860, 7060];
 
@@ -26,7 +27,7 @@ export function getPrimaryBonus(h: HeroV2, strGained: number, agiGained: number,
   if (h.primary_attr === 0) return strGained;
   if (h.primary_attr === 1) return agiGained;
   if (h.primary_attr === 2) return intGained;
-  return (strGained + agiGained + intGained) * 0.7; // universal
+  return (strGained + agiGained + intGained) * UNIVERSAL_DMG_PER_ATTR; // universal
 }
 
 export function calcHP(h: HeroV2, str: number): number {
@@ -55,6 +56,10 @@ export function calcManaRegen(h: HeroV2, int: number): number {
 
 export function calcDamage(h: HeroV2, str: number, agi: number, int: number): number {
   const baseDmg = (h.damage_min + h.damage_max) / 2;
+  if (h.primary_attr === 3) {
+    // Universal: API base damage excludes attribute bonus; add 0.45 × all attributes
+    return baseDmg + (str + agi + int) * UNIVERSAL_DMG_PER_ATTR;
+  }
   const strGained = str - h.str_base;
   const agiGained = agi - h.agi_base;
   const intGained = int - h.int_base;
