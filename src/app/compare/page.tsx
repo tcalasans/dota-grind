@@ -21,6 +21,7 @@ const DIMENSIONS: { key: StatDimension; label: string }[] = [
   { key: 'ms', label: 'Move Speed' },
   { key: 'atkfreq', label: 'Attacks/Sec' },
   { key: 'range', label: 'Range' },
+  { key: 'turn_rate', label: 'Turn Rate' },
 ];
 
 export default function ComparePage() {

@@ -161,7 +161,8 @@ export type StatDimension =
   | 'manaregen'
   | 'ms'
   | 'atkfreq'
-  | 'range';
+  | 'range'
+  | 'turn_rate';
 
 export const ROLE_NAMES = ['Carry', 'Support', 'Nuker', 'Disabler', 'Jungler', 'Durable', 'Escape', 'Pusher', 'Initiator'];
 

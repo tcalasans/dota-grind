@@ -106,11 +106,13 @@ export function calcStat(h: HeroV2, dim: StatDimension, level: number): number {
     case 'ms': return h.movement_speed;
     case 'atkfreq': return calcAtkFreq(h, agi);
     case 'range': return h.attack_range;
+    case 'turn_rate': return h.turn_rate;
   }
 }
 
 export function formatStat(value: number, dim: StatDimension): string {
   if (dim === 'armor' || dim === 'hpregen' || dim === 'manaregen' || dim === 'atkfreq') return value.toFixed(2);
   if (dim === 'mr') return value.toFixed(1) + '%';
+  if (dim === 'turn_rate') return value.toFixed(1);
   return Math.round(value).toString();
 }
