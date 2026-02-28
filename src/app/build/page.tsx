@@ -42,6 +42,50 @@ function buildUpgradeLookup(): Map<number, ItemV2[]> {
 
 const UPGRADE_LOOKUP = buildUpgradeLookup();
 
+/* ── Base32 (RFC 4648) encode/decode ── */
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Encode(input: string): string {
+  const bytes = new TextEncoder().encode(input);
+  let bits = 0, value = 0, out = '';
+  for (const byte of bytes) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      out += B32[(value >>> bits) & 0x1f];
+    }
+  }
+  if (bits > 0) out += B32[(value << (5 - bits)) & 0x1f];
+  return out;
+}
+
+function base32Decode(input: string): string {
+  let bits = 0, value = 0;
+  const bytes: number[] = [];
+  for (const ch of input.toUpperCase()) {
+    const idx = B32.indexOf(ch);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((value >>> bits) & 0xff);
+    }
+  }
+  return new TextDecoder().decode(new Uint8Array(bytes));
+}
+
+/* ── Build state JSON shape (compact keys) ── */
+interface BuildJSON {
+  h?: number;                              // hero id
+  f?: number;                              // facet index
+  r?: string;                              // role
+  s?: number[];                            // skills
+  t?: string;                              // talents e.g. "LR_R"
+  i?: [number, number, number | null][];   // items: [itemId, timing, upgradeOf]
+}
+
 type Role = 'carry' | 'offlaner' | 'midlaner' | 'sup4' | 'sup5';
 
 const ROLES: { value: Role; label: string }[] = [
@@ -79,49 +123,40 @@ function BuildContent() {
   useEffect(() => {
     trackEvent('open page', { page: 'Build Builder' });
 
-    const heroId = parseInt(searchParams.get('hero') || '');
-    if (heroId) {
-      const found = HEROES_V2.find((h) => h.id === heroId);
-      if (found) {
-        setHero(found);
+    const encoded = searchParams.get('b');
+    if (!encoded) return;
 
-        const fi = parseInt(searchParams.get('facet') || '');
-        if (!isNaN(fi) && fi >= 0 && fi < found.facets.length) {
-          setFacetIndex(fi);
-        } else if (found.facets.length === 1) {
-          setFacetIndex(0);
-        }
+    try {
+      const json: BuildJSON = JSON.parse(base32Decode(encoded));
 
-        const r = searchParams.get('role') as Role | null;
-        if (r && ROLES.some((ro) => ro.value === r)) {
-          setRole(r);
-        }
+      if (json.h) {
+        const found = HEROES_V2.find((h) => h.id === json.h);
+        if (found) {
+          setHero(found);
 
-        const skillsParam = searchParams.get('skills');
-        if (skillsParam) {
-          const parsed = skillsParam.split(',').map(Number).filter((n) => !isNaN(n));
-          setSkills(parsed);
-        }
+          if (json.f !== undefined && json.f >= 0 && json.f < found.facets.length) {
+            setFacetIndex(json.f);
+          } else if (found.facets.length === 1) {
+            setFacetIndex(0);
+          }
 
-        const talentsParam = searchParams.get('talents');
-        if (talentsParam && talentsParam.length === 4) {
-          setTalents(
-            talentsParam.split('').map((c) => (c === 'L' ? 'L' : c === 'R' ? 'R' : null))
-          );
-        }
+          if (json.r && ROLES.some((ro) => ro.value === json.r)) {
+            setRole(json.r as Role);
+          }
 
-        const itemsParam = searchParams.get('items');
-        if (itemsParam) {
-          const parsed = itemsParam.split(',').map((token) => {
-            // Format: itemId:timing or itemId:timing>parentIdx
-            const [main, parentStr] = token.split('>');
-            const [id, timing] = main.split(':').map(Number);
-            const upgradeOf = parentStr !== undefined ? parseInt(parentStr) : null;
-            return { itemId: id, timing: timing || 0, upgradeOf: isNaN(upgradeOf as number) ? null : upgradeOf };
-          }).filter((i) => !isNaN(i.itemId));
-          setItems(parsed);
+          if (json.s) setSkills(json.s);
+
+          if (json.t && json.t.length === 4) {
+            setTalents(json.t.split('').map((c) => (c === 'L' ? 'L' : c === 'R' ? 'R' : null)));
+          }
+
+          if (json.i) {
+            setItems(json.i.map(([itemId, timing, upgradeOf]) => ({ itemId, timing, upgradeOf: upgradeOf ?? null })));
+          }
         }
       }
+    } catch {
+      // Invalid base32 or JSON — ignore
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -134,24 +169,24 @@ function BuildContent() {
       talents: ('L' | 'R' | null)[];
       items: BuildItem[];
     }) => {
-      const params = new URLSearchParams();
-      if (state.hero) params.set('hero', String(state.hero.id));
-      if (state.facetIndex !== null) params.set('facet', String(state.facetIndex));
-      if (state.role) params.set('role', state.role);
-      if (state.skills.length > 0) params.set('skills', state.skills.join(','));
+      const json: BuildJSON = {};
+      if (state.hero) json.h = state.hero.id;
+      if (state.facetIndex !== null) json.f = state.facetIndex;
+      if (state.role) json.r = state.role;
+      if (state.skills.length > 0) json.s = state.skills;
       const talentStr = state.talents.map((t) => t || '_').join('');
-      if (talentStr !== '____') params.set('talents', talentStr);
+      if (talentStr !== '____') json.t = talentStr;
       if (state.items.length > 0) {
-        params.set(
-          'items',
-          state.items.map((i) => {
-            const base = `${i.itemId}:${i.timing}`;
-            return i.upgradeOf !== null ? `${base}>${i.upgradeOf}` : base;
-          }).join(',')
-        );
+        json.i = state.items.map((it) => [it.itemId, it.timing, it.upgradeOf]);
       }
-      const qs = params.toString();
-      router.replace(qs ? `?${qs}` : '/build', { scroll: false });
+
+      const hasData = Object.keys(json).length > 0;
+      if (hasData) {
+        const encoded = base32Encode(JSON.stringify(json));
+        router.replace(`?b=${encoded}`, { scroll: false });
+      } else {
+        router.replace('/build', { scroll: false });
+      }
     },
     [router]
   );
