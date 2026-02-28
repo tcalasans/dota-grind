@@ -238,7 +238,8 @@ function BuildContent() {
   }
 
   function addItem(item: ItemV2) {
-    const newItems = [...items, { itemId: item.id, timing: 0, upgradeOf: null }];
+    const lastTiming = items.length > 0 ? items[items.length - 1].timing : 0;
+    const newItems = [...items, { itemId: item.id, timing: lastTiming, upgradeOf: null }];
     setItems(newItems);
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
   }
@@ -279,13 +280,17 @@ function BuildContent() {
   }
 
   function updateItemTiming(index: number, timing: number) {
-    const newItems = items.map((item, i) => (i === index ? { ...item, timing } : item));
+    const min = index > 0 ? items[index - 1].timing : 0;
+    const max = index < items.length - 1 ? items[index + 1].timing : 120;
+    const clamped = Math.max(min, Math.min(max, timing));
+    const newItems = items.map((item, i) => (i === index ? { ...item, timing: clamped } : item));
     setItems(newItems);
     syncURL({ hero, facetIndex, role, skills, talents, items: newItems });
   }
 
   function upgradeItem(parentIndex: number, upgrade: ItemV2) {
-    const newItem: BuildItem = { itemId: upgrade.id, timing: 0, upgradeOf: parentIndex };
+    const lastTiming = items.length > 0 ? items[items.length - 1].timing : 0;
+    const newItem: BuildItem = { itemId: upgrade.id, timing: lastTiming, upgradeOf: parentIndex };
     const newItems = [...items.map((item) => ({ ...item })), newItem];
     setItems(newItems);
     setUpgradeMenuIndex(null);
@@ -498,8 +503,8 @@ function BuildContent() {
                       <div className="flex items-center gap-1">
                         <input
                           type="number"
-                          min={0}
-                          max={120}
+                          min={idx > 0 ? items[idx - 1].timing : 0}
+                          max={idx < items.length - 1 ? items[idx + 1].timing : 120}
                           value={buildItem.timing}
                           onChange={(e) => updateItemTiming(idx, parseInt(e.target.value) || 0)}
                           className="w-[50px] px-2 py-1 rounded border border-border bg-header text-text-primary text-xs text-center outline-none focus:border-accent"
