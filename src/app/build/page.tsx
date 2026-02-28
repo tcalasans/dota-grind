@@ -429,6 +429,10 @@ function BuildContent() {
               }
               return (
               <div className="flex flex-col gap-2 mb-4">
+                <div className="flex items-end">
+                  <div className="flex-1" />
+                  <div className="w-[70px] shrink-0 text-center text-[0.55rem] text-text-dim uppercase tracking-wide">Net Worth</div>
+                </div>
                 {items.map((buildItem, idx) => {
                   const itemData = ITEMS_V2.find((i) => i.id === buildItem.itemId);
                   if (!itemData) return null;
@@ -533,9 +537,8 @@ function BuildContent() {
                       </div>
 
                       {/* Net Worth */}
-                      <div className="flex flex-col items-center w-[70px] shrink-0">
-                        <div className="text-[0.55rem] text-text-dim uppercase tracking-wide">Net Worth</div>
-                        <div className="text-sm font-bold text-[#e4ae39]">{rollingNW[idx].toLocaleString()}</div>
+                      <div className="w-[70px] shrink-0 text-center text-sm font-bold text-[#e4ae39]">
+                        {rollingNW[idx].toLocaleString()}
                       </div>
                     </div>
                   );
