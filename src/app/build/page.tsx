@@ -113,6 +113,7 @@ function BuildContent() {
   const [itemPickerOpen, setItemPickerOpen] = useState(false);
   const [hasTracked, setHasTracked] = useState(false);
   const [upgradeMenuIndex, setUpgradeMenuIndex] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Load from URL on mount
   useEffect(() => {
@@ -309,6 +310,19 @@ function BuildContent() {
       <PageHeader title="Build Builder" />
 
       <div className="p-5 max-w-[1000px] mx-auto">
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-header text-text-muted text-xs hover:text-accent hover:border-accent cursor-pointer transition-all"
+            title="Copy build link"
+          >
+            {copied ? '✓ Copied' : '⎘ Copy Link'}
+          </button>
+        </div>
         {/* Step 1: Hero Setup */}
         <div className="bg-header/50 rounded-xl border border-border p-5 mb-5">
           <h3 className="text-sm font-bold uppercase tracking-wide text-accent mb-4">Hero Setup</h3>
